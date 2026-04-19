@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Mail, Lock } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { mockUsers } from "@/mock/users";
+import { checkCredentials } from "@/mock/users";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -32,7 +32,7 @@ export default function MasukPage() {
     setErrors({});
     setLoading(true);
     setTimeout(() => {
-      const user = mockUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
+      const user = checkCredentials(email, password);
       if (!user) {
         setErrors({ general: "Email atau password salah" });
         setLoading(false);
@@ -123,8 +123,13 @@ export default function MasukPage() {
         </form>
 
         <div className="mt-6 rounded-lg bg-surface p-3 text-xs text-muted">
-          <strong className="block text-text-main">Mode Demo:</strong>
-          Gunakan email salah satu akun mock (mis. <code>budi.santoso@example.com</code>) dengan password apa saja.
+          <strong className="block mb-1 text-text-main">Akun Seed (staging):</strong>
+          <div className="space-y-0.5">
+            <div><code className="text-primary">user@tcm.my.id</code> — User@tcm2026</div>
+            <div><code className="text-primary">moderator@tcm.my.id</code> — Mod@tcm2026</div>
+            <div><code className="text-primary">admin@tcm.my.id</code> — Admin@tcm2026</div>
+            <div><code className="text-primary">superadmin@tcm.my.id</code> — SuperAdmin@2026!</div>
+          </div>
         </div>
 
         <p className="mt-6 text-center text-sm text-muted">

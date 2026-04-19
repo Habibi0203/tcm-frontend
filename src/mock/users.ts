@@ -109,3 +109,17 @@ export function getUserByUsername(username: string): MockUser | undefined {
 export function getUserByEmail(email: string): MockUser | undefined {
   return mockUsers.find((u) => u.email === email);
 }
+
+/** Mock credential store — only used for frontend simulation, never sent to server */
+const MOCK_PASSWORDS: Record<string, string> = {
+  "user@tcm.my.id":        "User@tcm2026",
+  "moderator@tcm.my.id":   "Mod@tcm2026",
+  "admin@tcm.my.id":       "Admin@tcm2026",
+  "superadmin@tcm.my.id":  "SuperAdmin@2026!",
+};
+
+export function checkCredentials(email: string, password: string): MockUser | null {
+  const stored = MOCK_PASSWORDS[email.toLowerCase()];
+  if (!stored || stored !== password) return null;
+  return getUserByEmail(email.toLowerCase()) ?? null;
+}
