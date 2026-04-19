@@ -32,7 +32,7 @@ export default function MasukPage() {
 
     const result = await apiFetch<AuthUser & { access_token: string }>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: { email, password },
     });
 
     setLoading(false);

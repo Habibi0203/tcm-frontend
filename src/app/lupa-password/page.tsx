@@ -19,7 +19,7 @@ export default function LupaPasswordPage() {
 
     const result = await apiFetch<{ message: string }>("/auth/forgot-password", {
       method: "POST",
-      body: JSON.stringify({ email }),
+      body: { email },
     });
 
     setLoading(false);
@@ -72,13 +72,13 @@ export default function LupaPasswordPage() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <div>
                   <label htmlFor="email" className="mb-1 block text-sm font-medium text-text-main">
                     Alamat Email
                   </label>
                   <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@contoh.com" required
+                    placeholder="email@contoh.com"
                     className="w-full rounded-xl border border-border-main bg-white px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
                 <button type="submit" disabled={loading}

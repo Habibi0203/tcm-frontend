@@ -66,13 +66,13 @@ export default function DaftarPage() {
 
     const result = await apiFetch<AuthUser & { access_token: string }>("/auth/register", {
       method: "POST",
-      body: JSON.stringify({
+      body: {
         email:        form.email,
         username:     form.username,
         display_name: form.display_name,
         password:     form.password,
         profession:   form.profession,
-      }),
+      },
     });
 
     setLoading(false);
