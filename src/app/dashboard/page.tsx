@@ -67,8 +67,8 @@ function DashboardInner() {
     if (!access_token) return;
     setLoading(true);
     const [bmRes, notifRes] = await Promise.all([
-      apiFetch<BookmarkedArticle[]>("/users/me/bookmarks", { token: access_token }),
-      apiFetch<NotifItem[]>("/users/me/notifications", { token: access_token }),
+      apiFetch<BookmarkedArticle[]>("/me/bookmarks", { token: access_token }),
+      apiFetch<NotifItem[]>("/me/notifications", { token: access_token }),
     ]);
     if (bmRes.success) setBookmarks(bmRes.data);
     if (notifRes.success) setNotifications(notifRes.data);
@@ -116,13 +116,20 @@ function DashboardInner() {
         <aside>
           {/* Avatar card */}
           <div className="rounded-2xl border border-border-main bg-card p-5 text-center">
-            <Image
-              src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.display_name)}`}
-              alt={user.display_name}
-              width={80}
-              height={80}
-              className="mx-auto rounded-full"
-            />
+            {user.avatar_url ? (
+              <Image
+                src={user.avatar_url}
+                alt={user.display_name}
+                width={80}
+                height={80}
+                className="mx-auto rounded-full"
+                unoptimized
+              />
+            ) : (
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white">
+                {(user.display_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
+              </div>
+            )}
             <h2 className="mt-3 font-display text-lg font-bold">{user.display_name}</h2>
             <p className="text-xs text-muted">@{user.username}</p>
             <div className="mt-2 flex justify-center">

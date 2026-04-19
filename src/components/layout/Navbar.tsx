@@ -57,7 +57,7 @@ export default function Navbar() {
   // Fetch notifications from real API
   const fetchNotifications = useCallback(async () => {
     if (!access_token) return;
-    const res = await apiFetch<NotifItem[]>("/users/me/notifications", { token: access_token });
+    const res = await apiFetch<NotifItem[]>("/me/notifications", { token: access_token });
     if (res.success) setNotifications(res.data);
   }, [access_token]);
 
@@ -186,13 +186,20 @@ export default function Navbar() {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-2 rounded-full border border-bark-light bg-bark-light/60 py-1 pl-1 pr-3 hover:bg-bark-light"
                 >
-                  <Image
-                    src={user!.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user!.display_name)}`}
-                    alt={user!.display_name}
-                    width={28}
-                    height={28}
-                    className="rounded-full"
-                  />
+                  {user!.avatar_url ? (
+                    <Image
+                      src={user!.avatar_url}
+                      alt={user!.display_name}
+                      width={28}
+                      height={28}
+                      className="rounded-full"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+                      {(user!.display_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
+                    </div>
+                  )}
                   <span className="text-sm font-medium text-sand">{user!.display_name}</span>
                   <ChevronDown size={14} className="text-clay" />
                 </button>

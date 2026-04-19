@@ -12,7 +12,7 @@ interface UserProfile {
   id: string;
   username: string;
   display_name: string;
-  avatar_url: string;
+  avatar_url: string | null;
   bio: string | null;
   profession: "general" | "practitioner" | "student";
   role: "member" | "moderator" | "admin" | "superadmin" | "agent";
@@ -79,13 +79,20 @@ export default async function ProfilPage({ params }: { params: { username: strin
       {/* Header */}
       <div className="mb-8 rounded-2xl border border-border-main bg-gradient-to-br from-primary-light/40 to-white p-6 sm:p-8">
         <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-          <Image
-            src={user.avatar_url}
-            alt={user.display_name}
-            width={100}
-            height={100}
-            className="rounded-full border-4 border-white shadow-sm"
-          />
+          {user.avatar_url ? (
+            <Image
+              src={user.avatar_url}
+              alt={user.display_name}
+              width={100}
+              height={100}
+              className="rounded-full border-4 border-white shadow-sm"
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full border-4 border-white bg-primary text-3xl font-bold text-white shadow-sm">
+              {(user.display_name ?? "?").trim().charAt(0).toUpperCase() || "?"}
+            </div>
+          )}
           <div className="flex-1">
             <h1 className="font-display text-3xl font-bold text-text-main">{user.display_name}</h1>
             <div className="mt-1 text-sm text-muted">@{user.username}</div>

@@ -9,7 +9,7 @@ interface ArticleData {
   slug: string;
   title: string;
   excerpt: string | null;
-  thumbnail_url: string;
+  thumbnail_url: string | null;
   access_tier: "free" | "premium";
   view_count: number;
   like_count: number;
@@ -27,6 +27,8 @@ interface ArticleCardProps {
 }
 
 export default function ArticleCard({ article, variant = "grid" }: ArticleCardProps) {
+  const safeThumbnail = article.thumbnail_url?.trim() || null;
+
   if (variant === "compact") {
     return (
       <Link
@@ -34,13 +36,19 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
         className="flex gap-3 rounded-lg p-2 transition-colors hover:bg-surface"
       >
         <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
-          <Image
-            src={article.thumbnail_url}
-            alt={article.title}
-            fill
-            sizes="64px"
-            className="object-cover"
-          />
+          {safeThumbnail ? (
+            <Image
+              src={safeThumbnail}
+              alt={article.title}
+              fill
+              sizes="64px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-primary-light px-2 text-center text-[10px] font-semibold text-primary">
+              TCM
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="line-clamp-2 text-sm font-medium text-text-main">{article.title}</h4>
@@ -60,13 +68,19 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
         className="group flex flex-col gap-4 rounded-xl border border-border-main bg-card p-4 transition-shadow hover:shadow-md sm:flex-row"
       >
         <div className="relative h-48 w-full flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-32 sm:w-48">
-          <Image
-            src={article.thumbnail_url}
-            alt={article.title}
-            fill
-            sizes="(max-width: 640px) 100vw, 192px"
-            className="object-cover transition-transform group-hover:scale-105"
-          />
+          {safeThumbnail ? (
+            <Image
+              src={safeThumbnail}
+              alt={article.title}
+              fill
+              sizes="(max-width: 640px) 100vw, 192px"
+              className="object-cover transition-transform group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-primary-light px-4 text-center text-sm font-semibold text-primary">
+              Artikel TCM
+            </div>
+          )}
           {article.access_tier === "premium" && (
             <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-amber-tcm px-2 py-0.5 text-xs font-semibold text-white">
               <Lock size={10} /> Premium
@@ -98,13 +112,19 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
       className="group flex flex-col overflow-hidden rounded-xl border border-border-main bg-card transition-all hover:shadow-lg"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
-        <Image
-          src={article.thumbnail_url}
-          alt={article.title}
-          fill
-          sizes="(max-width: 768px) 100vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        {safeThumbnail ? (
+          <Image
+            src={safeThumbnail}
+            alt={article.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-light to-surface px-6 text-center text-base font-semibold text-primary">
+            {article.title}
+          </div>
+        )}
         {article.access_tier === "premium" && (
           <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-amber-tcm px-2.5 py-1 text-xs font-semibold text-white">
             <Lock size={12} /> Premium
