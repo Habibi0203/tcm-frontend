@@ -10,6 +10,7 @@ import {
   Heading2, Heading3, Loader2, Check,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import type { AuthUser } from "@/store/authStore";
 import { mockCategories } from "@/mock/categories";
 import { useToast } from "@/components/ui/Toast";
 

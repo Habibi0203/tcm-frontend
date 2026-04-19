@@ -5,15 +5,16 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Mail, Lock, User as UserIcon, AtSign, UserCircle } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { mockUsers, type Profession } from "@/mock/users";
+import { apiFetch } from "@/lib/api";
+import type { AuthUser } from "@/store/authStore";
 
 type Form = {
-  email: string;
-  username: string;
-  display_name: string;
-  password: string;
+  email:            string;
+  username:         string;
+  display_name:     string;
+  password:         string;
   confirm_password: string;
-  profession: Profession;
+  profession:       "general" | "practitioner" | "student";
 };
 
 function isValidEmail(email: string) {
@@ -50,31 +51,45 @@ export default function DaftarPage() {
   const router = useRouter();
   const { login } = useAuthStore();
   const [form, setForm] = useState<Form>({
-    email: "",
-    username: "",
-    display_name: "",
-    password: "",
-    confirm_password: "",
-    profession: "general",
+    email: "", username: "", display_name: "",
+    password: "", confirm_password: "", profession: "general",
   });
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
+  const [errors, setErrors]   = useState<Partial<Record<keyof Form | "general", string>>>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate(form);
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
-    }
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
     setLoading(true);
-    setTimeout(() => {
-      // Mock: langsung login sebagai Budi (free member) seperti spesifikasi v3
-      const user = mockUsers[2];
-      login(user);
-      router.push("/dashboard");
-    }, 800);
+
+    const result = await apiFetch<AuthUser & { access_token: string }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        email:        form.email,
+        username:     form.username,
+        display_name: form.display_name,
+        password:     form.password,
+        profession:   form.profession,
+      }),
+    });
+
+    setLoading(false);
+
+    if (!result.success) {
+      const fieldErrs = result.error.fields ?? {};
+      if (Object.keys(fieldErrs).length > 0) {
+        setErrors(fieldErrs as Partial<Record<keyof Form | "general", string>>);
+      } else {
+        setErrors({ general: result.error.message });
+      }
+      return;
+    }
+
+    const { access_token, ...user } = result.data;
+    login(user as AuthUser, access_token);
+    router.push("/dashboard");
   };
 
   return (
@@ -105,18 +120,21 @@ export default function DaftarPage() {
           <div className="h-px flex-1 bg-border-main" />
         </div>
 
+        {errors.general && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {errors.general}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
             <label className="mb-1 block text-sm font-medium">Email</label>
             <div className="relative">
               <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="email"
-                value={form.email}
+              <input type="email" value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="w-full rounded-lg border border-border-main bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="email@example.com"
-              />
+                placeholder="email@example.com" />
             </div>
             {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
           </div>
@@ -125,13 +143,10 @@ export default function DaftarPage() {
             <label className="mb-1 block text-sm font-medium">Username</label>
             <div className="relative">
               <AtSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="text"
-                value={form.username}
+              <input type="text" value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase() })}
                 className="w-full rounded-lg border border-border-main bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="username_kamu"
-              />
+                placeholder="username_kamu" />
             </div>
             {errors.username && <p className="mt-1 text-xs text-red-600">{errors.username}</p>}
           </div>
@@ -140,13 +155,10 @@ export default function DaftarPage() {
             <label className="mb-1 block text-sm font-medium">Nama Tampilan</label>
             <div className="relative">
               <UserIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="text"
-                value={form.display_name}
+              <input type="text" value={form.display_name}
                 onChange={(e) => setForm({ ...form, display_name: e.target.value })}
                 className="w-full rounded-lg border border-border-main bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Nama kamu"
-              />
+                placeholder="Nama kamu" />
             </div>
             {errors.display_name && <p className="mt-1 text-xs text-red-600">{errors.display_name}</p>}
           </div>
@@ -155,11 +167,9 @@ export default function DaftarPage() {
             <label className="mb-1 block text-sm font-medium">Profesi</label>
             <div className="relative">
               <UserCircle size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <select
-                value={form.profession}
-                onChange={(e) => setForm({ ...form, profession: e.target.value as Profession })}
-                className="w-full appearance-none rounded-lg border border-border-main bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
+              <select value={form.profession}
+                onChange={(e) => setForm({ ...form, profession: e.target.value as Form["profession"] })}
+                className="w-full appearance-none rounded-lg border border-border-main bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
                 <option value="general">Umum</option>
                 <option value="practitioner">Praktisi TCM</option>
                 <option value="student">Mahasiswa TCM</option>
@@ -172,13 +182,10 @@ export default function DaftarPage() {
             <label className="mb-1 block text-sm font-medium">Password</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="password"
-                value={form.password}
+              <input type="password" value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="w-full rounded-lg border border-border-main bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Min 8 karakter, huruf + angka"
-              />
+                placeholder="Min 8 karakter, huruf + angka" />
             </div>
             {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
           </div>
@@ -187,33 +194,23 @@ export default function DaftarPage() {
             <label className="mb-1 block text-sm font-medium">Konfirmasi Password</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="password"
-                value={form.confirm_password}
+              <input type="password" value={form.confirm_password}
                 onChange={(e) => setForm({ ...form, confirm_password: e.target.value })}
                 className="w-full rounded-lg border border-border-main bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Ulangi password"
-              />
+                placeholder="Ulangi password" />
             </div>
-            {errors.confirm_password && (
-              <p className="mt-1 text-xs text-red-600">{errors.confirm_password}</p>
-            )}
+            {errors.confirm_password && <p className="mt-1 text-xs text-red-600">{errors.confirm_password}</p>}
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-primary py-2.5 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
-          >
+          <button type="submit" disabled={loading}
+            className="w-full rounded-lg bg-primary py-2.5 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60">
             {loading ? "Mendaftar..." : "Daftar Gratis"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted">
           Sudah punya akun?{" "}
-          <Link href="/masuk" className="font-medium text-primary hover:text-primary-dark">
-            Masuk
-          </Link>
+          <Link href="/masuk" className="font-medium text-primary hover:text-primary-dark">Masuk</Link>
         </p>
       </div>
     </div>

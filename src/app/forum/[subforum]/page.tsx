@@ -2,22 +2,50 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Lock, Plus } from "lucide-react";
-import { getSubforumBySlug } from "@/mock/subforums";
-import { getThreadsBySubforum } from "@/mock/threads";
+import { serverFetch } from "@/lib/api";
+import ThreadRow from "@/components/ui/ThreadRow";
 
 export async function generateMetadata({ params }: { params: { subforum: string } }): Promise<Metadata> {
-  const sf = getSubforumBySlug(params.subforum);
+  const res = await serverFetch<{ name: string; description: string }>(`/subforums/${params.subforum}`);
+  const sf  = res.success ? res.data : null;
   return {
     title: sf ? `${sf.name} — Forum tcm.my.id` : "Forum — tcm.my.id",
     description: sf?.description ?? "Forum diskusi TCM Indonesia.",
   };
 }
-import ThreadRow from "@/components/ui/ThreadRow";
 
-export default function SubforumPage({ params }: { params: { subforum: string } }) {
-  const subforum = getSubforumBySlug(params.subforum);
-  if (!subforum) notFound();
-  const threads = getThreadsBySubforum(params.subforum);
+interface Subforum {
+  id:           string;
+  name:         string;
+  slug:         string;
+  description:  string;
+  access_tier:  "free" | "premium";
+  thread_count: number;
+  last_activity_at: string | null;
+}
+
+interface ThreadItem {
+  id:           string;
+  title:        string;
+  is_pinned:    boolean;
+  is_locked:    boolean;
+  view_count:   number;
+  reply_count:  number;
+  last_reply_at: string | null;
+  created_at:   string;
+  subforum:     { id: string; name: string; slug: string };
+  author:       { id: string; username: string; display_name: string; avatar_url: string | null; role: string } | null;
+}
+
+export default async function SubforumPage({ params }: { params: { subforum: string } }) {
+  const [sfRes, threadsRes] = await Promise.all([
+    serverFetch<Subforum>(`/subforums/${params.subforum}`),
+    serverFetch<ThreadItem[]>(`/subforums/${params.subforum}/threads`),
+  ]);
+
+  if (!sfRes.success) notFound();
+  const subforum = sfRes.data;
+  const threads  = threadsRes.success ? threadsRes.data : [];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -37,10 +65,8 @@ export default function SubforumPage({ params }: { params: { subforum: string } 
           <h1 className="font-display text-3xl font-bold text-text-main sm:text-4xl">{subforum.name}</h1>
           <p className="mt-2 text-muted">{subforum.description}</p>
         </div>
-        <Link
-          href="#"
-          className="inline-flex items-center gap-2 self-start rounded-full bg-primary px-5 py-2.5 font-semibold text-white hover:bg-primary-dark"
-        >
+        <Link href={`/forum/${params.subforum}/baru`}
+          className="inline-flex items-center gap-2 self-start rounded-full bg-primary px-5 py-2.5 font-semibold text-white hover:bg-primary-dark">
           <Plus size={16} /> Thread Baru
         </Link>
       </header>
@@ -48,7 +74,7 @@ export default function SubforumPage({ params }: { params: { subforum: string } 
       {threads.length > 0 ? (
         <div className="space-y-3">
           {threads.map((t) => (
-            <ThreadRow key={t.id} thread={t} />
+            <ThreadRow key={t.id} thread={t as Parameters<typeof ThreadRow>[0]["thread"]} />
           ))}
         </div>
       ) : (
