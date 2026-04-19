@@ -1,27 +1,81 @@
+/* tcm-theme v3 */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Light mode (default) ─────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Semantic tokens — RGB triplets for Tailwind opacity support */
+  --tw-primary:        74  103  65;   /* #4a6741 moss green    */
+  --tw-primary-dark:   59   83  51;   /* #3b5333               */
+  --tw-primary-light: 216  232 207;   /* #d8e8cf               */
+  --tw-amber:         201  152  58;   /* #c9983a gold          */
+  --tw-amber-light:   245  228 192;   /* #f5e4c0               */
+  --tw-surface:       250  246 239;   /* #faf6ef cream         */
+  --tw-card:          255  255 255;   /* #ffffff               */
+  --tw-text-main:      30   20  16;   /* #1e1410 ink           */
+  --tw-muted:         139   94  60;   /* #8b5e3c earth         */
+  --tw-border-main:   221  208 184;   /* #ddd0b8               */
+  --tw-parchment:     245  237 224;   /* #f5ede0               */
+
+  /* Legacy CSS vars (used by non-Tailwind CSS) */
+  --color-primary:       #4a6741;
+  --color-primary-dark:  #3b5333;
+  --color-bark:          #3d2b1f;
+  --color-bark-light:    #5c3d2e;
+  --color-clay:          #c4874f;
+  --color-earth:         #8b5e3c;
+  --color-surface:       #faf6ef;
+  --color-card:          #ffffff;
+  --color-text:          #1e1410;
+  --color-muted:         #8b5e3c;
+  --color-border:        #ddd0b8;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Dark mode overrides ──────────────────────────────────────── */
+.dark {
+  --tw-surface:        15   10   7;   /* #0f0a07 very dark bg  */
+  --tw-card:           28   18   9;   /* #1c1209 dark card     */
+  --tw-text-main:     232  213 183;   /* #e8d5b7 sand text     */
+  --tw-muted:         196  135  79;   /* #c4874f clay          */
+  --tw-border-main:    61   43  31;   /* #3d2b1f bark border   */
+  --tw-primary-light:  26   46  23;   /* #1a2e17 dark moss tint*/
+  --tw-amber-light:    50   35  10;   /* #32230a dark gold tint*/
+  --tw-parchment:      22   14   8;   /* #160e08 dark section  */
+
+  --color-surface:   #0f0a07;
+  --color-card:      #1c1209;
+  --color-text:      #e8d5b7;
+  --color-muted:     #c4874f;
+  --color-border:    #3d2b1f;
+}
+
+/* ── Subtle paper-grain texture overlay ──────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.35;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--tw-text-main));
+  background: rgb(var(--tw-surface));
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 300;
 }
 
+/* ── Dark mode: fix hardcoded whites ────────────────────────── */
+.dark .bg-white { background-color: rgb(var(--tw-card)) !important; }
+
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .text-balance { text-wrap: balance; }
+  .prose-reading {
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
