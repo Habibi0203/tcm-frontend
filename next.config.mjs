@@ -22,6 +22,8 @@ const nextConfig = {
         { source: "/api/threads/:path*",   destination: `${backend}/api/threads/:path*` },
         { source: "/api/replies/:path*",   destination: `${backend}/api/replies/:path*` },
         { source: "/api/users/:path*",     destination: `${backend}/api/users/:path*` },
+        { source: "/api/admin/:path*",     destination: `${backend}/api/admin/:path*` },
+        { source: "/api/agent/:path*",     destination: `${backend}/api/agent/:path*` },
         { source: "/api/health",           destination: `${backend}/api/health` },
       ],
     };

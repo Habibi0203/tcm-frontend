@@ -1,12 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Menu, X, ChevronDown, User, LogOut, LayoutDashboard, Bell } from "lucide-react";
 import Image from "next/image";
 import { useAuthStore } from "@/store/authStore";
-import { mockNotifications } from "@/mock/notifications";
+import { apiFetch } from "@/lib/api";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+
+interface NotifItem {
+  id: string;
+  type: "article_approved" | "article_rejected" | "new_reply" | "reply_upvote" | "system";
+  title: string;
+  body: string | null;
+  link: string | null;
+  is_read: boolean;
+  created_at: string;
+}
 
 function relativeTime(iso: string) {
   const d = new Date(iso).getTime();
@@ -27,7 +37,9 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, access_token, logout } = useAuthStore();
+
+  const [notifications, setNotifications] = useState<NotifItem[]>([]);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef  = useRef<HTMLDivElement>(null);
@@ -42,6 +54,19 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
+  // Fetch notifications from real API
+  const fetchNotifications = useCallback(async () => {
+    if (!access_token) return;
+    const res = await apiFetch<NotifItem[]>("/users/me/notifications", { token: access_token });
+    if (res.success) setNotifications(res.data);
+  }, [access_token]);
+
+  useEffect(() => {
+    if (isAuthenticated && access_token) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated, access_token, fetchNotifications]);
+
   const navLinks = [
     { href: "/",       label: "Beranda" },
     { href: "/artikel", label: "Artikel" },
@@ -49,8 +74,7 @@ export default function Navbar() {
     { href: "/tentang", label: "Tentang" },
   ];
 
-  const myNotifs    = user ? mockNotifications.filter((n) => n.user_id === user.id) : [];
-  const unreadCount = myNotifs.filter((n) => !n.is_read).length;
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
     <header className="sticky top-0 z-40 bg-bark shadow-[0_2px_20px_rgba(0,0,0,0.35)]">
@@ -122,12 +146,12 @@ export default function Navbar() {
                       </button>
                     </div>
                     <div className="max-h-80 overflow-y-auto">
-                      {myNotifs.length === 0 ? (
+                      {notifications.length === 0 ? (
                         <div className="px-4 py-8 text-center text-sm text-muted">
                           Belum ada notifikasi
                         </div>
                       ) : (
-                        myNotifs.slice(0, 5).map((n) => (
+                        notifications.slice(0, 5).map((n) => (
                           <Link
                             key={n.id}
                             href={n.link || "#"}
@@ -163,7 +187,7 @@ export default function Navbar() {
                   className="flex items-center gap-2 rounded-full border border-bark-light bg-bark-light/60 py-1 pl-1 pr-3 hover:bg-bark-light"
                 >
                   <Image
-                    src={user!.avatar_url}
+                    src={user!.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user!.display_name)}`}
                     alt={user!.display_name}
                     width={28}
                     height={28}

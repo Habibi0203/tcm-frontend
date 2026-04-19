@@ -4,7 +4,7 @@ import { Globe, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
 
-export default function TranslateToggle() {
+export default function TranslateToggle({ hasEnglish = false }: { hasEnglish?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -41,7 +41,7 @@ export default function TranslateToggle() {
       </button>
       <button
         onClick={() => handleToggle("en")}
-        disabled={loading || isPending}
+        disabled={loading || isPending || !hasEnglish}
         className={`rounded-full px-3 py-1 font-medium transition-colors ${
           currentLang === "en" ? "bg-primary text-white" : "text-muted hover:text-text-main"
         }`}

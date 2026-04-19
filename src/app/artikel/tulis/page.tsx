@@ -10,13 +10,18 @@ import {
   Heading2, Heading3, Loader2, Check,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import type { AuthUser } from "@/store/authStore";
-import { mockCategories } from "@/mock/categories";
+import { apiFetch } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
+
+interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 export default function TulisArtikelPage() {
   const router = useRouter();
-  const { user, isAuthenticated, _hasHydrated } = useAuthStore();
+  const { user, isAuthenticated, access_token, _hasHydrated } = useAuthStore();
   const { toast } = useToast();
 
   const [title,       setTitle]      = useState("");
@@ -25,11 +30,21 @@ export default function TulisArtikelPage() {
   const [accessTier,  setAccessTier] = useState<"free" | "premium">("free");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted,   setSubmitted]  = useState(false);
+  const [categories, setCategories]  = useState<CategoryItem[]>([]);
 
   useEffect(() => {
     if (!_hasHydrated) return;
     if (!isAuthenticated) router.push("/masuk");
   }, [isAuthenticated, _hasHydrated, router]);
+
+  // Fetch categories from API
+  useEffect(() => {
+    async function loadCategories() {
+      const res = await apiFetch<CategoryItem[]>("/articles/categories");
+      if (res.success) setCategories(res.data);
+    }
+    loadCategories();
+  }, []);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -55,11 +70,27 @@ export default function TulisArtikelPage() {
       return;
     }
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 800)); // simulated submit
+
+    const res = await apiFetch("/articles", {
+      method: "POST",
+      token: access_token ?? undefined,
+      body: {
+        title: title.trim(),
+        excerpt: excerpt.trim() || undefined,
+        content,
+        category_id: categoryId,
+        access_tier: accessTier,
+      },
+    });
+
     setIsSubmitting(false);
-    setSubmitted(true);
-    toast("Artikel dikirim untuk review!", "success");
-    setTimeout(() => router.push("/dashboard"), 1500);
+    if (res.success) {
+      setSubmitted(true);
+      toast("Artikel dikirim untuk review!", "success");
+      setTimeout(() => router.push("/dashboard"), 1500);
+    } else {
+      toast(res.error?.message || "Gagal mengirim artikel.", "error");
+    }
   }
 
   return (
@@ -116,7 +147,7 @@ export default function TulisArtikelPage() {
               className="w-full rounded-xl border border-border-main bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none"
             >
               <option value="">— Pilih kategori —</option>
-              {mockCategories.map((c) => (
+              {categories.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>

@@ -1,12 +1,28 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Clock, Lock, Eye, MessageCircle } from "lucide-react";
-import { MockArticle } from "@/mock/articles";
 import { formatRelativeTime } from "@/lib/utils";
 import CategoryBadge from "./CategoryBadge";
 
+interface ArticleData {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  thumbnail_url: string;
+  access_tier: "free" | "premium";
+  view_count: number;
+  like_count: number;
+  comment_count: number;
+  published_at: string | null;
+  read_time_minutes?: number;
+  tags: string[];
+  category: { id: string; name: string; slug: string; color_hex: string };
+  author: { id: string; username: string; display_name: string; avatar_url: string | null; role: string } | null;
+}
+
 interface ArticleCardProps {
-  article: MockArticle;
+  article: ArticleData;
   variant?: "grid" | "list" | "compact";
 }
 
@@ -66,7 +82,7 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
           </h3>
           <p className="mb-3 line-clamp-2 text-sm text-muted">{article.excerpt}</p>
           <div className="flex items-center gap-4 text-xs text-muted">
-            <span>{article.author.display_name}</span>
+            <span>{article.author?.display_name ?? "Anonim"}</span>
             <span className="flex items-center gap-1"><Clock size={12} />{article.read_time_minutes} min</span>
             <span className="flex items-center gap-1"><Eye size={12} />{article.view_count}</span>
             <span className="flex items-center gap-1"><MessageCircle size={12} />{article.comment_count}</span>
@@ -104,12 +120,12 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
         </h3>
         <p className="mb-3 line-clamp-2 flex-1 text-sm text-muted">{article.excerpt}</p>
         <div className="mt-auto flex items-center justify-between text-xs text-muted">
-          <span className="truncate">{article.author.display_name}</span>
+          <span className="truncate">{article.author?.display_name ?? "Anonim"}</span>
           <span className="flex items-center gap-1 flex-shrink-0">
             <Clock size={12} /> {article.read_time_minutes} min
           </span>
         </div>
-        <div className="mt-2 text-xs text-muted">{formatRelativeTime(article.published_at)}</div>
+        {article.published_at && <div className="mt-2 text-xs text-muted">{formatRelativeTime(article.published_at)}</div>}
       </div>
     </Link>
   );

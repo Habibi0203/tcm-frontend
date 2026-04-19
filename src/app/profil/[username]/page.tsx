@@ -2,28 +2,77 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Calendar } from "lucide-react";
-import { mockUsers } from "@/mock/users";
-import { mockArticles } from "@/mock/articles";
-
-export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
-  const u = mockUsers.find((m) => m.username === params.username);
-  return {
-    title: u ? `${u.display_name} (@${u.username}) — tcm.my.id` : "Profil — tcm.my.id",
-    description: u?.bio ?? `Profil anggota ${params.username} di komunitas TCM Indonesia.`,
-  };
-}
-import { mockThreads } from "@/mock/threads";
+import { serverFetch } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import ArticleCard from "@/components/ui/ArticleCard";
 import MemberBadge from "@/components/ui/MemberBadge";
 import ThreadRow from "@/components/ui/ThreadRow";
 
-export default function ProfilPage({ params }: { params: { username: string } }) {
-  const user = mockUsers.find((u) => u.username === params.username);
-  if (!user) notFound();
+interface UserProfile {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string;
+  bio: string | null;
+  profession: "general" | "practitioner" | "student";
+  role: "member" | "moderator" | "admin" | "superadmin" | "agent";
+  membership_tier: "free" | "premium";
+  is_verified: boolean;
+  is_active: boolean;
+  created_at: string;
+}
 
-  const userArticles = mockArticles.filter((a) => a.author_id === user.id);
-  const userThreads = mockThreads.filter((t) => t.author.id === user.id);
+interface ProfileArticle {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  thumbnail_url: string | null;
+  access_tier: "free" | "premium";
+  view_count: number;
+  like_count: number;
+  comment_count: number;
+  published_at: string | null;
+  tags: string[];
+  category: { id: string; name: string; slug: string; color_hex: string };
+  author: { id: string; username: string; display_name: string; avatar_url: string | null; role: string } | null;
+}
+
+interface ProfileThread {
+  id: string;
+  title: string;
+  slug: string;
+  subforum: { id: string; name: string; slug: string };
+  author: { id: string; username: string; display_name: string; avatar_url: string | null; role: string };
+  reply_count: number;
+  is_pinned: boolean;
+  is_locked: boolean;
+  created_at: string;
+  last_activity_at: string | null;
+}
+
+export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
+  const res = await serverFetch<UserProfile>(`/users/${params.username}`);
+  const u = res.success ? res.data : null;
+  return {
+    title: u ? `${u.display_name} (@${u.username}) — tcm.my.id` : "Profil — tcm.my.id",
+    description: u?.bio ?? `Profil anggota ${params.username} di komunitas TCM Indonesia.`,
+  };
+}
+
+export default async function ProfilPage({ params }: { params: { username: string } }) {
+  const userRes = await serverFetch<UserProfile>(`/users/${params.username}`);
+  if (!userRes.success) notFound();
+  const user = userRes.data;
+
+  // Fetch user's articles and threads
+  const [articlesRes, threadsRes] = await Promise.all([
+    serverFetch<ProfileArticle[]>(`/articles?author=${user.id}&per_page=9`),
+    serverFetch<ProfileThread[]>(`/users/${params.username}/threads`),
+  ]);
+
+  const userArticles = articlesRes.success ? articlesRes.data : [];
+  const userThreads = threadsRes.success ? threadsRes.data : [];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -51,7 +100,7 @@ export default function ProfilPage({ params }: { params: { username: string } })
                 <Calendar size={12} /> Bergabung {formatDate(user.created_at)}
               </span>
             </div>
-            <p className="mt-4 max-w-2xl text-sm text-text-main">{user.bio}</p>
+            {user.bio && <p className="mt-4 max-w-2xl text-sm text-text-main">{user.bio}</p>}
           </div>
         </div>
       </div>
@@ -69,7 +118,7 @@ export default function ProfilPage({ params }: { params: { username: string } })
           <h2 className="mb-4 font-display text-2xl font-bold">Artikel Kontribusi</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {userArticles.map((a) => (
-              <ArticleCard key={a.id} article={a} />
+              <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} />
             ))}
           </div>
         </section>
@@ -81,7 +130,7 @@ export default function ProfilPage({ params }: { params: { username: string } })
           <h2 className="mb-4 font-display text-2xl font-bold">Diskusi</h2>
           <div className="space-y-3">
             {userThreads.map((t) => (
-              <ThreadRow key={t.id} thread={t} />
+              <ThreadRow key={t.id} thread={t as Parameters<typeof ThreadRow>[0]["thread"]} />
             ))}
           </div>
         </section>

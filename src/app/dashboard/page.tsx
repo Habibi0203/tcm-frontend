@@ -3,17 +3,40 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { BookOpen, Bell, Settings, Crown, Check, ExternalLink } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { mockArticles, getArticleById } from "@/mock/articles";
-import { mockBookmarks } from "@/mock/bookmarks";
-import { mockNotifications } from "@/mock/notifications";
+import { apiFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
 import MemberBadge from "@/components/ui/MemberBadge";
-import type { MockNotification } from "@/mock/notifications";
 
 type Tab = "ringkasan" | "bookmark" | "notifikasi" | "profil";
+
+interface BookmarkedArticle {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  thumbnail_url: string | null;
+  access_tier: "free" | "premium";
+  view_count: number;
+  like_count: number;
+  comment_count: number;
+  published_at: string | null;
+  tags: string[];
+  category: { id: string; name: string; slug: string; color_hex: string };
+  author: { id: string; username: string; display_name: string; avatar_url: string | null; role: string } | null;
+}
+
+interface NotifItem {
+  id: string;
+  type: "article_approved" | "article_rejected" | "new_reply" | "reply_upvote" | "system";
+  title: string;
+  body: string | null;
+  link: string | null;
+  is_read: boolean;
+  created_at: string;
+}
 
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "ringkasan",  label: "Ringkasan",  icon: <BookOpen size={16} /> },
@@ -25,15 +48,38 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
 function DashboardInner() {
   const router        = useRouter();
   const searchParams  = useSearchParams();
-  const { user, isAuthenticated, _hasHydrated, updateUser } = useAuthStore();
+  const { user, isAuthenticated, access_token, _hasHydrated, updateUser } = useAuthStore();
 
   const rawTab = searchParams.get("tab") as Tab | null;
   const activeTab: Tab = TABS.some((t) => t.key === rawTab) ? rawTab! : "ringkasan";
+
+  const [bookmarks, setBookmarks]       = useState<BookmarkedArticle[]>([]);
+  const [notifications, setNotifications] = useState<NotifItem[]>([]);
+  const [loading, setLoading]           = useState(true);
 
   useEffect(() => {
     if (!_hasHydrated) return;
     if (!isAuthenticated) router.push("/masuk");
   }, [isAuthenticated, _hasHydrated, router]);
+
+  // Fetch bookmarks & notifications from API
+  const fetchDashboardData = useCallback(async () => {
+    if (!access_token) return;
+    setLoading(true);
+    const [bmRes, notifRes] = await Promise.all([
+      apiFetch<BookmarkedArticle[]>("/users/me/bookmarks", { token: access_token }),
+      apiFetch<NotifItem[]>("/users/me/notifications", { token: access_token }),
+    ]);
+    if (bmRes.success) setBookmarks(bmRes.data);
+    if (notifRes.success) setNotifications(notifRes.data);
+    setLoading(false);
+  }, [access_token]);
+
+  useEffect(() => {
+    if (isAuthenticated && access_token) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated, access_token, fetchDashboardData]);
 
   // Profile form state
   const [displayName, setDisplayName] = useState(user?.display_name ?? "");
@@ -46,19 +92,21 @@ function DashboardInner() {
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   }
 
-  // Bookmarked articles
-  const bookmarkedArticles = mockBookmarks
-    .map((b) => getArticleById(b.article_id))
-    .filter(Boolean) as typeof mockArticles;
-
-  const unreadCount = mockNotifications.filter((n) => !n.is_read).length;
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
-    await new Promise((r) => setTimeout(r, 500));
-    updateUser({ display_name: displayName, bio: bio || undefined });
-    setProfSaved(true);
-    setTimeout(() => setProfSaved(false), 3000);
+    if (!access_token) return;
+    const res = await apiFetch("/users/me", {
+      method: "PATCH",
+      token: access_token,
+      body: { display_name: displayName, bio: bio || undefined },
+    });
+    if (res.success) {
+      updateUser({ display_name: displayName, bio: bio || undefined });
+      setProfSaved(true);
+      setTimeout(() => setProfSaved(false), 3000);
+    }
   }
 
   return (
@@ -69,7 +117,7 @@ function DashboardInner() {
           {/* Avatar card */}
           <div className="rounded-2xl border border-border-main bg-card p-5 text-center">
             <Image
-              src={user.avatar_url}
+              src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.display_name)}`}
               alt={user.display_name}
               width={80}
               height={80}
@@ -129,9 +177,9 @@ function DashboardInner() {
               </h1>
               <p className="mb-8 text-muted">Ringkasan aktivitas Anda di tcm.my.id.</p>
               <div className="grid gap-4 sm:grid-cols-3">
-                <StatBox label="Artikel Dibaca" value="24" />
-                <StatBox label="Diskusi" value="8" />
-                <StatBox label="Tersimpan" value={String(mockBookmarks.length)} />
+                <StatBox label="Artikel Dibaca" value="-" />
+                <StatBox label="Diskusi" value="-" />
+                <StatBox label="Tersimpan" value={String(bookmarks.length)} />
               </div>
               <div className="mt-10">
                 <div className="mb-4 flex items-center justify-between">
@@ -140,11 +188,17 @@ function DashboardInner() {
                     Lihat semua
                   </button>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {bookmarkedArticles.slice(0, 3).map((a) => (
-                    <ArticleCard key={a.id} article={a} />
-                  ))}
-                </div>
+                {loading ? (
+                  <p className="text-muted text-sm">Memuat...</p>
+                ) : bookmarks.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {bookmarks.slice(0, 3).map((a) => (
+                      <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted">Belum ada bookmark.</p>
+                )}
               </div>
             </>
           )}
@@ -153,14 +207,14 @@ function DashboardInner() {
           {activeTab === "bookmark" && (
             <>
               <h1 className="mb-6 font-display text-2xl font-bold">Artikel Tersimpan</h1>
-              {bookmarkedArticles.length === 0 ? (
+              {bookmarks.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border-main bg-surface p-12 text-center text-muted">
                   Belum ada artikel yang disimpan.
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {bookmarkedArticles.map((a) => (
-                    <ArticleCard key={a.id} article={a} />
+                  {bookmarks.map((a) => (
+                    <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} />
                   ))}
                 </div>
               )}
@@ -177,9 +231,13 @@ function DashboardInner() {
                 )}
               </div>
               <div className="space-y-3">
-                {mockNotifications.map((n) => (
-                  <NotifRow key={n.id} notif={n} />
-                ))}
+                {notifications.length === 0 ? (
+                  <p className="text-sm text-muted">Belum ada notifikasi.</p>
+                ) : (
+                  notifications.map((n) => (
+                    <NotifRow key={n.id} notif={n} />
+                  ))
+                )}
               </div>
             </>
           )}
@@ -261,15 +319,15 @@ function StatBox({ label, value }: { label: string; value: string }) {
   );
 }
 
-function NotifRow({ notif }: { notif: MockNotification }) {
-  const typeColors: Record<MockNotification["type"], string> = {
+function NotifRow({ notif }: { notif: NotifItem }) {
+  const typeColors: Record<NotifItem["type"], string> = {
     new_reply:       "bg-primary/10 text-primary",
     reply_upvote:    "bg-purple-100 text-purple-700",
     article_approved:"bg-green-100 text-green-700",
     article_rejected:"bg-red-100 text-red-700",
     system:          "bg-surface text-muted",
   };
-  const typeLabels: Record<MockNotification["type"], string> = {
+  const typeLabels: Record<NotifItem["type"], string> = {
     new_reply:        "Balasan",
     reply_upvote:     "Upvote",
     article_approved: "Disetujui",

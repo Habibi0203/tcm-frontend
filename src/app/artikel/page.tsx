@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, LayoutGrid, List } from "lucide-react";
-import { mockCategories } from "@/mock/categories";
 import ArticleCard from "@/components/ui/ArticleCard";
 import { apiFetch } from "@/lib/api";
 
@@ -10,6 +9,12 @@ type SortOption = "latest" | "popular" | "most_commented";
 type ViewMode   = "grid" | "list";
 
 const VIEW_KEY = "tcm-article-view";
+
+interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 // Shape returned by GET /api/articles (list item)
 interface ArticleListItem {
@@ -51,6 +56,7 @@ export default function ArtikelPage() {
   const [sort,         setSort]         = useState<SortOption>("latest");
   const [view,         setView]         = useState<ViewMode>("grid");
   const [articles,     setArticles]     = useState<ArticleListItem[]>([]);
+  const [categories,   setCategories]   = useState<CategoryItem[]>([]);
   const [total,        setTotal]        = useState(0);
   const [loading,      setLoading]      = useState(true);
 
@@ -58,6 +64,15 @@ export default function ArtikelPage() {
   useEffect(() => {
     const saved = localStorage.getItem(VIEW_KEY);
     if (saved === "list" || saved === "grid") setView(saved);
+  }, []);
+
+  // Fetch categories once
+  useEffect(() => {
+    async function loadCats() {
+      const res = await apiFetch<CategoryItem[]>("/articles/categories");
+      if (res.success) setCategories(res.data);
+    }
+    loadCats();
   }, []);
 
   // Debounce search
@@ -108,7 +123,7 @@ export default function ArtikelPage() {
           className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${categorySlug === null ? "bg-primary text-white" : "border border-border-main bg-white text-muted hover:bg-surface"}`}>
           Semua
         </button>
-        {mockCategories.map((c) => (
+        {categories.map((c) => (
           <button key={c.id} onClick={() => setCategorySlug(c.slug)}
             className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${categorySlug === c.slug ? "bg-primary text-white" : "border border-border-main bg-white text-muted hover:bg-surface"}`}>
             {c.name}

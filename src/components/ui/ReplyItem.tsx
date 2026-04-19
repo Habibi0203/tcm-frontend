@@ -3,8 +3,24 @@
 import Image from "next/image";
 import { useState } from "react";
 import { ThumbsUp, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
-import type { ThreadReply } from "@/mock/threads";
 import MemberBadge from "./MemberBadge";
+
+interface ThreadReply {
+  id: string;
+  content: string;
+  author: {
+    id: string;
+    username: string;
+    display_name: string;
+    avatar_url: string | null;
+    role: string;
+    membership_tier?: string;
+    is_verified?: boolean;
+  } | null;
+  upvote_count: number;
+  created_at: string;
+  replies?: ThreadReply[];
+}
 
 interface ReplyItemProps {
   reply: ThreadReply;
@@ -34,24 +50,32 @@ export default function ReplyItem({ reply, isNested = false, onUpvote, onReply }
     <div className={`relative ${isNested ? "ml-10 mt-3 border-l-2 border-border-main pl-4" : ""}`}>
       {/* Top bar: avatar + meta */}
       <div className="flex items-start gap-3">
-        <Image
-          src={reply.author.avatar_url}
-          alt={reply.author.display_name}
-          width={isNested ? 28 : 36}
-          height={isNested ? 28 : 36}
-          className="shrink-0 rounded-full"
-        />
+        {reply.author?.avatar_url ? (
+          <Image
+            src={reply.author.avatar_url}
+            alt={reply.author.display_name}
+            width={isNested ? 28 : 36}
+            height={isNested ? 28 : 36}
+            className="shrink-0 rounded-full"
+          />
+        ) : (
+          <div className={`flex shrink-0 items-center justify-center rounded-full bg-primary-light text-xs font-bold text-primary ${isNested ? "h-7 w-7" : "h-9 w-9"}`}>
+            {(reply.author?.display_name ?? "?")[0]}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold text-text-main">
-              {reply.author.display_name}
+              {reply.author?.display_name ?? "Anonim"}
             </span>
-            <MemberBadge
-              tier={reply.author.membership_tier}
-              role={reply.author.role}
-              isVerified={reply.author.is_verified && reply.author.role === "member"}
-              size="sm"
-            />
+            {reply.author && (
+              <MemberBadge
+                tier={reply.author.membership_tier as "free" | "premium" | undefined}
+                role={reply.author.role}
+                isVerified={reply.author.is_verified && reply.author.role === "member"}
+                size="sm"
+              />
+            )}
             <span className="text-xs text-muted">{formatDate(reply.created_at)}</span>
           </div>
 

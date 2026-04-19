@@ -88,7 +88,7 @@ export default function EmailIndexPage() {
       </div>
 
       <div className="mt-6 rounded-xl bg-gray-800 px-5 py-4 font-mono text-xs text-gray-300">
-        <div className="mb-2 text-gray-400">// Contoh penggunaan API route:</div>
+        <div className="mb-2 text-gray-400">{/* Contoh penggunaan API route: */}</div>
         <div className="text-green-400">POST /api/email/send</div>
         <div className="mt-1 text-gray-300">{`{ "template": "selamat-datang", "to": { "email": "user@example.com" }, "data": { "name": "Budi" } }`}</div>
       </div>

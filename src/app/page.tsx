@@ -12,16 +12,69 @@ export const metadata: Metadata = {
   },
 };
 import { ArrowRight, BookOpen, Users, MessageCircle, Stethoscope } from "lucide-react";
-import { getLatestArticles } from "@/mock/articles";
-import { mockCategories } from "@/mock/categories";
-import { getLatestThreads } from "@/mock/threads";
-import { mockPlatformStats } from "@/mock/stats";
+import { serverFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
-import ThreadRow from "@/components/ui/ThreadRow";
 
-export default function HomePage() {
-  const latestArticles = getLatestArticles(6);
-  const latestThreads = getLatestThreads(5);
+// Shape returned by GET /api/articles (list item)
+interface ArticleListItem {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  thumbnail_url: string | null;
+  access_tier: "free" | "premium";
+  view_count: number;
+  like_count: number;
+  comment_count: number;
+  published_at: string | null;
+  tags: string[];
+  read_time_minutes?: number;
+  author_type?: string;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+    color_hex: string;
+  };
+  author: {
+    id: string;
+    username: string;
+    display_name: string;
+    avatar_url: string | null;
+    role: string;
+  } | null;
+}
+
+interface SubforumItem {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  access_tier: "free" | "premium";
+  thread_count: number;
+  last_activity_at: string | null;
+}
+
+interface StatsData {
+  total_articles: number;
+  total_members: number;
+  active_subforums: number;
+  verified_practitioners: number;
+}
+
+export default async function HomePage() {
+  // Fetch real data from backend (all in parallel)
+  const [articlesRes, subforumsRes, statsRes] = await Promise.all([
+    serverFetch<ArticleListItem[]>("/articles?sort=newest&per_page=6"),
+    serverFetch<SubforumItem[]>("/subforums"),
+    serverFetch<StatsData>("/admin/stats"),
+  ]);
+
+  const latestArticles = articlesRes.success ? articlesRes.data : [];
+  const subforums = subforumsRes.success ? subforumsRes.data : [];
+  const stats: StatsData = statsRes.success
+    ? statsRes.data
+    : { total_articles: 0, total_members: 0, active_subforums: 0, verified_practitioners: 0 };
 
   return (
     <>
@@ -60,10 +113,10 @@ export default function HomePage() {
       {/* Stats */}
       <section className="border-b border-border-main bg-white">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 md:grid-cols-4 lg:px-8">
-          <StatCard icon={<BookOpen size={22} />} value={mockPlatformStats.total_articles} label="Artikel" />
-          <StatCard icon={<Users size={22} />} value={mockPlatformStats.total_members} label="Member" />
-          <StatCard icon={<MessageCircle size={22} />} value={mockPlatformStats.active_subforums} label="Subforum Aktif" />
-          <StatCard icon={<Stethoscope size={22} />} value={mockPlatformStats.verified_practitioners} label="Praktisi Terverifikasi" />
+          <StatCard icon={<BookOpen size={22} />} value={stats.total_articles} label="Artikel" />
+          <StatCard icon={<Users size={22} />} value={stats.total_members} label="Member" />
+          <StatCard icon={<MessageCircle size={22} />} value={stats.active_subforums || subforums.length} label="Subforum Aktif" />
+          <StatCard icon={<Stethoscope size={22} />} value={stats.verified_practitioners} label="Praktisi Terverifikasi" />
         </div>
       </section>
 
@@ -78,58 +131,43 @@ export default function HomePage() {
             Lihat Semua <ArrowRight size={16} />
           </Link>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {latestArticles.map((a) => (
-            <ArticleCard key={a.id} article={a} />
-          ))}
-        </div>
+        {latestArticles.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {latestArticles.map((a) => (
+              <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border-main bg-white p-10 text-center">
+            <p className="text-muted">Belum ada artikel tersedia.</p>
+          </div>
+        )}
       </section>
 
-      {/* Categories */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <h2 className="mb-8 font-display text-3xl font-bold text-text-main">Jelajahi Kategori</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {mockCategories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/kategori/${cat.slug}`}
-                className="group rounded-xl border border-border-main bg-surface p-5 transition-all hover:border-primary hover:shadow-md"
-              >
-                <div
-                  className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg text-white"
-                  style={{ backgroundColor: cat.color_hex }}
-                >
-                  <span className="text-lg font-bold">{cat.name.charAt(0)}</span>
-                </div>
-                <h3 className="mb-1 font-display text-lg font-semibold text-text-main group-hover:text-primary">
-                  {cat.name}
-                </h3>
-                <p className="line-clamp-2 text-sm text-muted">{cat.description}</p>
-                <div className="mt-3 text-xs text-muted">{cat.article_count} artikel</div>
+      {/* Subforums preview */}
+      {subforums.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <h2 className="font-display text-3xl font-bold text-text-main">Forum Komunitas</h2>
+              <p className="mt-1 text-muted">Bergabung dalam percakapan komunitas</p>
+            </div>
+            <Link href="/forum" className="hidden items-center gap-1 text-sm font-medium text-primary hover:text-primary-dark sm:inline-flex">
+              Ke Forum <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {subforums.slice(0, 4).map((s) => (
+              <Link key={s.id} href={`/forum/${s.slug}`}
+                className="group rounded-xl border border-border-main bg-card p-5 transition-all hover:border-primary hover:shadow-md">
+                <h3 className="font-display text-lg font-semibold text-text-main group-hover:text-primary">{s.name}</h3>
+                <p className="mt-1 text-sm text-muted line-clamp-2">{s.description}</p>
+                <div className="mt-3 text-xs text-muted">{s.thread_count} thread</div>
               </Link>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Latest Threads */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <h2 className="font-display text-3xl font-bold text-text-main">Diskusi Terbaru</h2>
-            <p className="mt-1 text-muted">Bergabung dalam percakapan komunitas</p>
-          </div>
-          <Link href="/forum" className="hidden items-center gap-1 text-sm font-medium text-primary hover:text-primary-dark sm:inline-flex">
-            Ke Forum <ArrowRight size={16} />
-          </Link>
-        </div>
-        <div className="space-y-3">
-          {latestThreads.map((t) => (
-            <ThreadRow key={t.id} thread={t} />
-          ))}
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">

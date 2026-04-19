@@ -1,24 +1,51 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle, Eye, Pin, Lock } from "lucide-react";
-import { MockThread } from "@/mock/threads";
 import { formatRelativeTime } from "@/lib/utils";
 import MemberBadge from "./MemberBadge";
 
-export default function ThreadRow({ thread }: { thread: MockThread }) {
+interface ThreadData {
+  id: string;
+  title: string;
+  slug?: string;
+  subforum: { id: string; name: string; slug: string };
+  author: {
+    id: string;
+    username: string;
+    display_name: string;
+    avatar_url: string | null;
+    role: string;
+    membership_tier?: string;
+    is_verified?: boolean;
+  } | null;
+  reply_count: number;
+  view_count?: number;
+  is_pinned: boolean;
+  is_locked: boolean;
+  created_at: string;
+  last_reply_author?: { display_name: string } | null;
+}
+
+export default function ThreadRow({ thread }: { thread: ThreadData }) {
   return (
     <Link
       href={`/forum/${thread.subforum.slug}/${thread.id}`}
       className="group flex flex-col gap-3 rounded-lg border border-border-main bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary-light/20 sm:flex-row sm:items-center"
     >
       <div className="flex flex-1 items-start gap-3">
-        <Image
-          src={thread.author.avatar_url}
-          alt={thread.author.display_name}
-          width={40}
-          height={40}
-          className="h-10 w-10 flex-shrink-0 rounded-full"
-        />
+        {thread.author?.avatar_url ? (
+          <Image
+            src={thread.author.avatar_url}
+            alt={thread.author.display_name}
+            width={40}
+            height={40}
+            className="h-10 w-10 flex-shrink-0 rounded-full"
+          />
+        ) : (
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-light text-sm font-bold text-primary">
+            {(thread.author?.display_name ?? "?")[0]}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             {thread.is_pinned && <Pin size={14} className="text-primary" />}
@@ -28,12 +55,14 @@ export default function ThreadRow({ thread }: { thread: MockThread }) {
             </h3>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
-            <span className="font-medium text-text-main">{thread.author.display_name}</span>
-            <MemberBadge
-              tier={thread.author.membership_tier}
-              role={thread.author.role}
-              isVerified={thread.author.is_verified}
-            />
+            <span className="font-medium text-text-main">{thread.author?.display_name ?? "Anonim"}</span>
+            {thread.author && (
+              <MemberBadge
+                tier={thread.author.membership_tier as "free" | "premium" | undefined}
+                role={thread.author.role}
+                isVerified={thread.author.is_verified}
+              />
+            )}
             <span>•</span>
             <span>{formatRelativeTime(thread.created_at)}</span>
           </div>

@@ -52,7 +52,7 @@ export default function BalasanThreadEmailPage() {
               Thread Anda:
             </p>
             <p style={{ fontSize: "0.92rem", fontWeight: 600, color: "#3d2b1f", lineHeight: 1.4 }}>
-              "Pengalaman konsumsi Bai Zhu untuk pencernaan — ada yang pernah coba?"
+              {`"Pengalaman konsumsi Bai Zhu untuk pencernaan — ada yang pernah coba?"`}
             </p>
           </div>
 

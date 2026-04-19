@@ -2,22 +2,56 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { mockCategories } from "@/mock/categories";
-import { getArticlesByCategory } from "@/mock/articles";
+import { serverFetch } from "@/lib/api";
+import ArticleCard from "@/components/ui/ArticleCard";
+
+interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  color_hex: string;
+  article_count?: number;
+}
+
+interface ArticleItem {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  thumbnail_url: string | null;
+  access_tier: "free" | "premium";
+  view_count: number;
+  like_count: number;
+  comment_count: number;
+  published_at: string | null;
+  tags: string[];
+  category: { id: string; name: string; slug: string; color_hex: string };
+  author: { id: string; username: string; display_name: string; avatar_url: string | null; role: string } | null;
+}
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const cat = mockCategories.find((c) => c.slug === params.slug);
+  const res = await serverFetch<CategoryItem[]>("/articles/categories");
+  const cats = res.success ? res.data : [];
+  const cat = cats.find((c) => c.slug === params.slug);
   return {
     title: cat ? `Kategori: ${cat.name} — tcm.my.id` : "Kategori — tcm.my.id",
     description: cat?.description ?? `Artikel TCM kategori ${params.slug}.`,
   };
 }
-import ArticleCard from "@/components/ui/ArticleCard";
 
-export default function KategoriPage({ params }: { params: { slug: string } }) {
-  const category = mockCategories.find((c) => c.slug === params.slug);
+export default async function KategoriPage({ params }: { params: { slug: string } }) {
+  // Fetch categories and articles matching the slug
+  const [catRes, artRes] = await Promise.all([
+    serverFetch<CategoryItem[]>("/articles/categories"),
+    serverFetch<ArticleItem[]>(`/articles?category_slug=${params.slug}&per_page=30`),
+  ]);
+
+  const categories = catRes.success ? catRes.data : [];
+  const category = categories.find((c) => c.slug === params.slug);
   if (!category) notFound();
-  const articles = getArticlesByCategory(params.slug);
+
+  const articles = artRes.success ? artRes.data : [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -33,14 +67,16 @@ export default function KategoriPage({ params }: { params: { slug: string } }) {
           Kategori
         </span>
         <h1 className="mt-3 font-display text-4xl font-bold">{category.name}</h1>
-        <p className="mt-2 max-w-2xl text-white/90">{category.description}</p>
+        {category.description && (
+          <p className="mt-2 max-w-2xl text-white/90">{category.description}</p>
+        )}
         <div className="mt-3 text-sm text-white/80">{articles.length} artikel</div>
       </header>
 
       {articles.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {articles.map((a) => (
-            <ArticleCard key={a.id} article={a} />
+            <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} />
           ))}
         </div>
       ) : (

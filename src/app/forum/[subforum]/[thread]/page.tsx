@@ -48,7 +48,7 @@ interface ThreadDetail {
 
 export default function ThreadDetailPage() {
   const params  = useParams<{ subforum: string; thread: string }>();
-  const { user, isAuthenticated, access_token } = useAuthStore();
+  const { isAuthenticated, access_token } = useAuthStore();
   const { toast }              = useToast();
   const [thread,   setThread]  = useState<ThreadDetail | null>(null);
   const [replies,  setReplies] = useState<ReplyData[]>([]);
@@ -105,7 +105,7 @@ export default function ThreadDetailPage() {
     const result = await apiFetch<ReplyData>(`/threads/${params.thread}/replies`, {
       method: "POST",
       token: access_token ?? undefined,
-      body: JSON.stringify({ content, parent_reply_id: parentId ?? undefined }),
+      body: { content, parent_reply_id: parentId ?? undefined },
     });
 
     setReplying(false);

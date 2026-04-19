@@ -13,20 +13,34 @@ export type PaginationMeta = {
   page: number; per_page: number; total: number; total_pages: number;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface ApiFetchOptions extends Omit<RequestInit, 'body'> {
+  token?: string;
+  body?: unknown;
+}
+
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit & { token?: string } = {}
+  options: ApiFetchOptions = {}
 ): Promise<ApiResult<T>> {
-  const { token, headers: extraHeaders, ...rest } = options;
+  const { token, headers: extraHeaders, body, ...rest } = options;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(extraHeaders as Record<string, string> ?? {}),
   };
   try {
-    const res = await fetch(`${API_BASE}${path}`, { ...rest, headers });
-    const json = await res.json() as ApiResult<T>;
-    return json;
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...rest,
+      headers,
+      body: body != null ? JSON.stringify(body) : undefined,
+    });
+    const text = await res.text();
+    try {
+      return JSON.parse(text) as ApiResult<T>;
+    } catch {
+      return { success: false, error: { code: 'PARSE_ERROR', message: text || res.statusText } };
+    }
   } catch (e) {
     return { success: false, error: { code: 'NETWORK_ERROR', message: String(e) } };
   }

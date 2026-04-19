@@ -1,5 +1,15 @@
 /** Reusable HTML email templates — inline styles only (email-client safe) */
 
+/** Prevent HTML/XSS injection when interpolating user input into email HTML */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Shared primitives ────────────────────────────────────────────────────────
 
 const HEADER = `
@@ -42,11 +52,12 @@ function wrap(bodyHtml: string): string {
 // ── 1. Selamat Datang ────────────────────────────────────────────────────────
 
 export function welcomeEmail(opts: { name: string }): { subject: string; html: string } {
+  const safeName = escapeHtml(opts.name);
   const html = wrap(`
     <p style="font-size:0.78rem;color:#8b5e3c;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 8px;">Selamat Bergabung</p>
     <h1 style="font-size:1.5rem;color:#1e1410;font-weight:700;margin:0 0 16px;line-height:1.3;">
       Selamat datang di komunitas TCM Indonesia,
-      <span style="color:#4a6741;">${opts.name}</span>! 🌿
+      <span style="color:#4a6741;">${safeName}</span>! 🌿
     </h1>
     <p style="color:#4a3728;line-height:1.7;margin:0 0 20px;font-size:0.92rem;">
       Akun Anda di <strong>tcm.my.id</strong> telah berhasil dibuat. Kini Anda dapat mulai menjelajahi
@@ -71,7 +82,7 @@ export function welcomeEmail(opts: { name: string }): { subject: string; html: s
     </p>`);
 
   return {
-    subject: `Selamat datang di tcm.my.id, ${opts.name}! 🌿`,
+    subject: `Selamat datang di tcm.my.id, ${safeName}! 🌿`,
     html,
   };
 }
@@ -79,23 +90,25 @@ export function welcomeEmail(opts: { name: string }): { subject: string; html: s
 // ── 2. Reset Password ────────────────────────────────────────────────────────
 
 export function resetPasswordEmail(opts: { name: string; resetUrl: string }): { subject: string; html: string } {
+  const safeName = escapeHtml(opts.name);
+  const safeUrl  = escapeHtml(opts.resetUrl);
   const html = wrap(`
     <div style="text-align:center;margin:0 0 20px;">
       <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:#f5e4c0;font-size:1.5rem;line-height:1;">🔐</div>
     </div>
     <h1 style="font-size:1.4rem;color:#1e1410;font-weight:700;text-align:center;margin:0 0 12px;line-height:1.3;">Permintaan Reset Password</h1>
     <p style="color:#4a3728;line-height:1.7;text-align:center;margin:0 0 22px;font-size:0.92rem;">
-      Halo <strong>${opts.name}</strong>, kami menerima permintaan untuk mereset password akun tcm.my.id Anda.
+      Halo <strong>${safeName}</strong>, kami menerima permintaan untuk mereset password akun tcm.my.id Anda.
       Klik tombol di bawah untuk membuat password baru.
     </p>
     <div style="text-align:center;margin:0 0 22px;">
-      <a href="${opts.resetUrl}" style="display:inline-block;background:#4a6741;color:#fff;padding:13px 34px;border-radius:8px;font-weight:600;text-decoration:none;font-size:0.92rem;font-family:sans-serif;">
+      <a href="${safeUrl}" style="display:inline-block;background:#4a6741;color:#fff;padding:13px 34px;border-radius:8px;font-weight:600;text-decoration:none;font-size:0.92rem;font-family:sans-serif;">
         Reset Password Saya
       </a>
     </div>
     <div style="background:#f5ede0;border-radius:8px;padding:14px 18px;margin:0 0 20px;">
       <p style="font-size:0.75rem;color:#8b5e3c;margin:0 0 6px;font-weight:600;font-family:sans-serif;">Atau salin link ini ke browser:</p>
-      <p style="font-family:monospace;font-size:0.72rem;color:#4a6741;word-break:break-all;line-height:1.5;margin:0;">${opts.resetUrl}</p>
+      <p style="font-family:monospace;font-size:0.72rem;color:#4a6741;word-break:break-all;line-height:1.5;margin:0;">${safeUrl}</p>
     </div>
     <div style="background:#fff8e6;border:1px solid #f5e4c0;border-radius:8px;padding:13px 16px;margin:0 0 22px;display:flex;gap:10px;">
       <span style="font-size:1rem;flex-shrink:0;">⚠️</span>
@@ -126,6 +139,10 @@ export function premiumAktifEmail(opts: {
   startDate: string;
   expiryDate: string;
 }): { subject: string; html: string } {
+  const safeName   = escapeHtml(opts.name);
+  const safePlan   = escapeHtml(opts.plan);
+  const safeStart  = escapeHtml(opts.startDate);
+  const safeExpiry = escapeHtml(opts.expiryDate);
   const html = wrap(`
     <div style="text-align:center;margin:0 0 20px;">
       <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(201,152,58,0.15);border:1px solid rgba(201,152,58,0.35);border-radius:999px;padding:5px 16px;">
@@ -135,8 +152,8 @@ export function premiumAktifEmail(opts: {
     </div>
     <h1 style="font-size:1.5rem;color:#1e1410;font-weight:700;margin:0 0 12px;line-height:1.3;">Selamat! Akun Premium Anda Aktif 🎉</h1>
     <p style="color:#4a3728;line-height:1.7;margin:0 0 24px;font-size:0.92rem;">
-      Halo <strong>${opts.name}</strong>, terima kasih telah bergabung sebagai <strong>Member Premium tcm.my.id</strong>.
-      Kini Anda memiliki akses penuh ke seluruh konten eksklusif hingga <strong style="color:#3d2b1f;">${opts.expiryDate}</strong>.
+      Halo <strong>${safeName}</strong>, terima kasih telah bergabung sebagai <strong>Member Premium tcm.my.id</strong>.
+      Kini Anda memiliki akses penuh ke seluruh konten eksklusif hingga <strong style="color:#3d2b1f;">${safeExpiry}</strong>.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;">
       <tr>
@@ -166,9 +183,9 @@ export function premiumAktifEmail(opts: {
       </tr>
     </table>
     <div style="background:rgba(201,152,58,0.08);border:1px solid rgba(201,152,58,0.25);border-radius:10px;padding:14px 18px;margin:0 0 24px;font-family:sans-serif;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:7px;"><span style="font-size:0.8rem;color:#8b5e3c;">Paket</span><span style="font-size:0.8rem;font-weight:600;color:#1e1410;">${opts.plan}</span></div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:7px;"><span style="font-size:0.8rem;color:#8b5e3c;">Aktif sejak</span><span style="font-size:0.8rem;font-weight:600;color:#1e1410;">${opts.startDate}</span></div>
-      <div style="display:flex;justify-content:space-between;"><span style="font-size:0.8rem;color:#8b5e3c;">Berlaku hingga</span><span style="font-size:0.8rem;font-weight:600;color:#4a6741;">${opts.expiryDate}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:7px;"><span style="font-size:0.8rem;color:#8b5e3c;">Paket</span><span style="font-size:0.8rem;font-weight:600;color:#1e1410;">${safePlan}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:7px;"><span style="font-size:0.8rem;color:#8b5e3c;">Aktif sejak</span><span style="font-size:0.8rem;font-weight:600;color:#1e1410;">${safeStart}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span style="font-size:0.8rem;color:#8b5e3c;">Berlaku hingga</span><span style="font-size:0.8rem;font-weight:600;color:#4a6741;">${safeExpiry}</span></div>
     </div>
     <div style="text-align:center;margin:0 0 24px;">
       <a href="https://tcm.my.id/artikel" style="display:inline-block;background:#c9983a;color:#fff;padding:13px 34px;border-radius:8px;font-weight:600;text-decoration:none;font-size:0.92rem;font-family:sans-serif;">
@@ -199,6 +216,14 @@ export function balasanThreadEmail(opts: {
   replySnippet: string;
   subforumName: string;
 }): { subject: string; html: string } {
+  const safeRecipient  = escapeHtml(opts.recipientName);
+  const safeTitle      = escapeHtml(opts.threadTitle);
+  const safeUrl        = escapeHtml(opts.threadUrl);
+  const safeReplier    = escapeHtml(opts.replierName);
+  const safeInitials   = escapeHtml(opts.replierInitials);
+  const safeRole       = escapeHtml(opts.replierRole);
+  const safeSnippet    = escapeHtml(opts.replySnippet);
+  const safeSubforum   = escapeHtml(opts.subforumName);
   const html = wrap(`
     <div style="margin:0 0 16px;">
       <div style="display:inline-flex;align-items:center;gap:6px;background:#d8e8cf;border-radius:999px;padding:4px 12px;">
@@ -208,27 +233,27 @@ export function balasanThreadEmail(opts: {
     </div>
     <h1 style="font-size:1.3rem;color:#1e1410;font-weight:700;margin:0 0 8px;line-height:1.4;">Ada yang membalas thread Anda</h1>
     <p style="color:#8b5e3c;font-size:0.86rem;margin:0 0 22px;font-family:sans-serif;">
-      Halo <strong style="color:#1e1410;">${opts.recipientName}</strong>, seseorang baru saja membalas di
-      subforum <strong style="color:#4a6741;">${opts.subforumName}</strong>.
+      Halo <strong style="color:#1e1410;">${safeRecipient}</strong>, seseorang baru saja membalas di
+      subforum <strong style="color:#4a6741;">${safeSubforum}</strong>.
     </p>
     <div style="border-left:3px solid #ddd0b8;padding-left:14px;margin:0 0 18px;">
       <p style="font-size:0.7rem;color:#8b5e3c;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;font-family:sans-serif;">Thread Anda:</p>
-      <p style="font-size:0.9rem;font-weight:600;color:#3d2b1f;line-height:1.4;margin:0;">"${opts.threadTitle}"</p>
+      <p style="font-size:0.9rem;font-weight:600;color:#3d2b1f;line-height:1.4;margin:0;">"${safeTitle}"</p>
     </div>
     <div style="background:#fff;border:1px solid #ddd0b8;border-radius:10px;padding:16px 18px;margin:0 0 22px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
         <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#8b5e3c,#4a6741);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;flex-shrink:0;font-family:sans-serif;">
-          ${opts.replierInitials}
+          ${safeInitials}
         </div>
         <div>
-          <div style="font-size:0.86rem;font-weight:600;color:#1e1410;font-family:sans-serif;">${opts.replierName}</div>
-          <div style="font-size:0.7rem;color:#8b5e3c;font-family:sans-serif;">${opts.replierRole}</div>
+          <div style="font-size:0.86rem;font-weight:600;color:#1e1410;font-family:sans-serif;">${safeReplier}</div>
+          <div style="font-size:0.7rem;color:#8b5e3c;font-family:sans-serif;">${safeRole}</div>
         </div>
       </div>
-      <p style="font-size:0.86rem;color:#4a3728;line-height:1.7;margin:0;">${opts.replySnippet}</p>
+      <p style="font-size:0.86rem;color:#4a3728;line-height:1.7;margin:0;">${safeSnippet}</p>
     </div>
     <div style="text-align:center;margin:0 0 24px;">
-      <a href="${opts.threadUrl}" style="display:inline-block;background:#4a6741;color:#fff;padding:12px 28px;border-radius:8px;font-weight:600;text-decoration:none;font-size:0.9rem;margin-right:10px;font-family:sans-serif;">
+      <a href="${safeUrl}" style="display:inline-block;background:#4a6741;color:#fff;padding:12px 28px;border-radius:8px;font-weight:600;text-decoration:none;font-size:0.9rem;margin-right:10px;font-family:sans-serif;">
         Lihat Balasan →
       </a>
       <a href="https://tcm.my.id/dashboard?tab=notifikasi" style="display:inline-block;background:transparent;color:#4a6741;padding:12px 28px;border-radius:8px;font-weight:500;text-decoration:none;font-size:0.9rem;border:1px solid #ddd0b8;font-family:sans-serif;">
@@ -242,7 +267,7 @@ export function balasanThreadEmail(opts: {
     </p>`);
 
   return {
-    subject: `💬 ${opts.replierName} membalas thread Anda di tcm.my.id`,
+    subject: `💬 ${safeReplier} membalas thread Anda di tcm.my.id`,
     html,
   };
 }
