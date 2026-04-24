@@ -16,7 +16,7 @@ interface ArticleData {
   comment_count: number;
   published_at: string | null;
   read_time_minutes?: number;
-  tags: string[];
+  tags?: string[];
   category: { id: string; name: string; slug: string; color_hex: string };
   author: { id: string; username: string; display_name: string; avatar_url: string | null; role: string } | null;
 }

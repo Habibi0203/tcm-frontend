@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback, Suspense } from "react";
-import { BookOpen, Bell, Settings, Crown, Check, ExternalLink } from "lucide-react";
+import { BookOpen, Bell, Settings, Crown, Check, ExternalLink, KeyRound } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { apiFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
@@ -85,6 +85,15 @@ function DashboardInner() {
   const [displayName, setDisplayName] = useState(user?.display_name ?? "");
   const [bio, setBio]                 = useState(user?.bio ?? "");
   const [profSaved, setProfSaved]     = useState(false);
+  const [profSaving, setProfSaving]   = useState(false);
+  const [profError, setProfError]     = useState("");
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword]         = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passSaving, setPassSaving]           = useState(false);
+  const [passSaved, setPassSaved]             = useState(false);
+  const [passError, setPassError]             = useState("");
 
   if (!user) return null;
 
@@ -97,16 +106,65 @@ function DashboardInner() {
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     if (!access_token) return;
-    const res = await apiFetch("/users/me", {
+    setProfSaving(true);
+    setProfError("");
+    setProfSaved(false);
+
+    const res = await apiFetch("/me", {
       method: "PATCH",
       token: access_token,
-      body: { display_name: displayName, bio: bio || undefined },
+      body: { display_name: displayName.trim(), bio: bio.trim() || null },
     });
+
+    setProfSaving(false);
     if (res.success) {
-      updateUser({ display_name: displayName, bio: bio || undefined });
+      updateUser({ display_name: displayName.trim(), bio: bio.trim() || null });
       setProfSaved(true);
       setTimeout(() => setProfSaved(false), 3000);
+      return;
     }
+
+    setProfError(res.error.message || "Gagal menyimpan perubahan profil.");
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!access_token) return;
+
+    setPassError("");
+    setPassSaved(false);
+
+    if (newPassword.length < 8) {
+      setPassError("Password baru minimal 8 karakter.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPassError("Konfirmasi password baru tidak sama.");
+      return;
+    }
+
+    setPassSaving(true);
+    const res = await apiFetch<{ message: string }>("/me/password", {
+      method: "PATCH",
+      token: access_token,
+      body: {
+        current_password: currentPassword,
+        new_password: newPassword,
+      },
+    });
+    setPassSaving(false);
+
+    if (res.success) {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPassSaved(true);
+      setTimeout(() => setPassSaved(false), 3000);
+      return;
+    }
+
+    setPassError(res.error.message || "Gagal mengubah password.");
   }
 
   return (
@@ -299,16 +357,71 @@ function DashboardInner() {
                     className="w-full cursor-not-allowed rounded-xl border border-border-main bg-surface px-4 py-2.5 text-sm text-muted"
                   />
                 </div>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
-                >
-                  {profSaved ? <><Check size={16} /> Tersimpan!</> : "Simpan Perubahan"}
-                </button>
-                <p className="text-xs text-muted">
-                  Untuk mengubah email atau password, hubungi admin.
-                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={profSaving}
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {profSaved ? <><Check size={16} /> Tersimpan!</> : profSaving ? "Menyimpan..." : "Simpan Perubahan"}
+                  </button>
+                  {profError && <p className="text-sm text-red-400">{profError}</p>}
+                </div>
               </form>
+
+              <div className="mt-10 max-w-lg rounded-2xl border border-border-main bg-card p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <KeyRound size={18} className="text-primary" />
+                  <h2 className="font-display text-xl font-bold">Ganti Password</h2>
+                </div>
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-text-main">Password Saat Ini</label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      required
+                      className="w-full rounded-xl border border-border-main bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-text-main">Password Baru</label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      minLength={8}
+                      required
+                      className="w-full rounded-xl border border-border-main bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-text-main">Konfirmasi Password Baru</label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      minLength={8}
+                      required
+                      className="w-full rounded-xl border border-border-main bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="submit"
+                      disabled={passSaving}
+                      className="inline-flex items-center gap-2 rounded-xl bg-bark px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-bark-light disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {passSaved ? <><Check size={16} /> Password Diubah</> : passSaving ? "Menyimpan..." : "Ganti Password"}
+                    </button>
+                    {passError && <p className="text-sm text-red-400">{passError}</p>}
+                  </div>
+                  <p className="text-xs text-muted">
+                    Gunakan minimal 8 karakter. Setelah berhasil diubah, login berikutnya gunakan password baru.
+                  </p>
+                </form>
+              </div>
             </>
           )}
         </section>

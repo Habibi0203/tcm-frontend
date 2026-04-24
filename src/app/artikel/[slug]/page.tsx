@@ -8,7 +8,6 @@ import { formatDate } from "@/lib/utils";
 import CategoryBadge from "@/components/ui/CategoryBadge";
 import MemberBadge from "@/components/ui/MemberBadge";
 import TranslateToggle from "@/components/ui/TranslateToggle";
-import ArticleSidebar from "@/components/layout/ArticleSidebar";
 import ArticleContent from "./ArticleContent";
 
 interface ArticleDetail {
@@ -16,19 +15,19 @@ interface ArticleDetail {
   slug:          string;
   title:         string;
   excerpt:       string | null;
-  content:       string;
-  content_en:    string | null;
+  content?:      string;
+  content_en?:   string | null;
   thumbnail_url: string | null;
   access_tier:   "free" | "premium";
   view_count:    number;
   like_count:    number;
   comment_count: number;
   published_at:  string | null;
-  has_disclaimer: boolean;
-  tags:          string[];
+  has_disclaimer?: boolean;
+  tags?:         string[] | { id: string; name: string; slug: string }[];
   read_time_minutes: number | null;
-  category: { id: string; name: string; slug: string; color_hex: string };
-  author:   { id: string; username: string; display_name: string; avatar_url: string | null; role: string; bio: string | null } | null;
+  category: { id?: string; name: string; slug: string; color_hex: string | null } | null;
+  author:   { id: string; username: string; display_name: string; avatar_url: string | null; role: string; bio?: string | null } | null;
 }
 
 interface Comment {
@@ -43,9 +42,17 @@ interface PageProps {
   searchParams: { lang?: string };
 }
 
+async function getArticleBySlug(slug: string): Promise<ArticleDetail | null> {
+  const detailRes = await serverFetch<ArticleDetail>(`/articles/${encodeURIComponent(slug)}`);
+  if (detailRes.success) return detailRes.data;
+
+  const listRes = await serverFetch<ArticleDetail[]>(`/articles?slug=${encodeURIComponent(slug)}`);
+  if (!listRes.success) return null;
+  return listRes.data.find((item) => item.slug === slug) ?? null;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const res = await serverFetch<ArticleDetail>(`/articles/${params.slug}`);
-  const article = res.success ? res.data : null;
+  const article = await getArticleBySlug(params.slug);
   return article
     ? {
         title: `${article.title} — tcm.my.id`,
@@ -61,14 +68,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ArtikelDetailPage({ params, searchParams }: PageProps) {
-  const [artRes, commentRes] = await Promise.all([
-    serverFetch<ArticleDetail>(`/articles/${params.slug}`),
-    serverFetch<Comment[]>(`/articles/${params.slug}/comments`).catch(() => ({ success: false as const, error: { code: "", message: "" } })),
-  ]);
+  const article = await getArticleBySlug(params.slug);
 
-  if (!artRes.success) notFound();
-  const article  = artRes.data;
-  const comments = commentRes.success ? commentRes.data : [];
+  if (!article) notFound();
+  const comments: Comment[] = [];
   const lang = searchParams.lang === "en" ? "en" : "id";
 
   return (
@@ -79,20 +82,24 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
           <ArrowLeft size={14} /> Semua Artikel
         </Link>
         <span>/</span>
-        <Link href={`/kategori/${article.category.slug}`} className="hover:text-primary">
-          {article.category.name}
-        </Link>
+        {article.category && (
+          <Link href={`/kategori/${article.category.slug}`} className="hover:text-primary">
+            {article.category.name}
+          </Link>
+        )}
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
         <article>
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center gap-2">
-            <CategoryBadge
-              name={article.category.name}
-              slug={article.category.slug}
-              color={article.category.color_hex}
-            />
+            {article.category && (
+              <CategoryBadge
+                name={article.category.name}
+                slug={article.category.slug}
+                color={article.category.color_hex ?? "#888888"}
+              />
+            )}
             {article.access_tier === "premium" && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-light px-2.5 py-0.5 text-xs font-semibold text-amber-tcm">
                 👑 Premium
@@ -139,13 +146,17 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
           )}
 
           {/* Tags */}
-          {article.tags.length > 0 && (
+          {(article.tags ?? []).length > 0 && (
             <div className="mb-6 flex flex-wrap gap-2">
-              {article.tags.map((tag) => (
-                <span key={tag} className="rounded-full border border-border-main bg-surface px-3 py-1 text-xs text-muted">
-                  #{tag}
-                </span>
-              ))}
+              {(article.tags ?? []).map((tag) => {
+                const tagName = typeof tag === "string" ? tag : tag.name;
+                const tagKey = typeof tag === "string" ? tag : tag.id;
+                return (
+                  <span key={tagKey} className="rounded-full border border-border-main bg-surface px-3 py-1 text-xs text-muted">
+                    #{tagName}
+                  </span>
+                );
+              })}
             </div>
           )}
 
@@ -159,8 +170,8 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
 
           {/* Content */}
           <ArticleContent
-            contentId={article.id}
-            contentEn={article.content_en}
+            content={article.content ?? article.excerpt ?? ""}
+            contentEn={article.content_en ?? null}
             lang={lang}
             accessTier={article.access_tier}
             title={article.title}
@@ -199,7 +210,7 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
         </article>
 
         <aside>
-          <ArticleSidebar />
+          {/* Sidebar temporarily disabled while backend article routes are inconsistent and causing false 404 UI in streamed payloads */}
         </aside>
       </div>
     </div>

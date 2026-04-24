@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/authStore";
 import PremiumGate from "@/components/ui/PremiumGate";
 
 interface Props {
-  contentId: string;
+  content: string;
   contentEn: string | null;
   lang: "id" | "en";
   accessTier: "free" | "premium";
@@ -47,22 +47,66 @@ function processInline(text: string): string {
     .replace(/\*(.+?)\*/g, "<em>$1</em>");
 }
 
-export default function ArticleContent({ contentId, contentEn, lang, accessTier, title }: Props) {
+function looksLikeHtml(text: string): boolean {
+  return /<\/?[a-z][\s\S]*>/i.test(text);
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
+function normalizeArticleContent(text: string): string {
+  const decoded = decodeHtmlEntities(text);
+
+  if (looksLikeHtml(decoded)) {
+    return decoded
+      .replace(/^\s*<article[^>]*>/i, "")
+      .replace(/<\/article>\s*$/i, "")
+      .replace(/^\s*<h1\b[^>]*>[\s\S]*?<\/h1>\s*/i, "")
+      .trim();
+  }
+
+  return decoded.replace(/^\s*#\s+.+(?:\r?\n)+/i, "").trim();
+}
+
+function stripHtml(text: string): string {
+  return text
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function renderRichContent(text: string): string {
+  const normalized = normalizeArticleContent(text);
+  return looksLikeHtml(normalized) ? normalized : markdownToHtml(normalized);
+}
+
+export default function ArticleContent({ content, contentEn, lang, accessTier, title }: Props) {
   const { user } = useAuthStore();
   const isFreeUser = !user || user.membership_tier === "free";
   const isPremium = accessTier === "premium";
 
   // Pick content source
-  let content = lang === "en" ? contentEn : contentId;
+  let renderedContent = lang === "en" ? contentEn : content;
   let showTranslationPending = false;
   if (lang === "en" && !contentEn) {
-    content = contentId;
+    renderedContent = content;
     showTranslationPending = true;
   }
 
   // Premium gating — show preview (first ~300 words) then gate
   if (isPremium && isFreeUser) {
-    const words = (content || "").split(" ");
+    const normalizedPreview = normalizeArticleContent(renderedContent || "");
+    const previewSource = looksLikeHtml(normalizedPreview) ? stripHtml(normalizedPreview) : normalizedPreview;
+    const words = previewSource.split(" ");
     const preview = words.slice(0, 150).join(" ") + "...";
     return (
       <>
@@ -72,7 +116,7 @@ export default function ArticleContent({ contentId, contentEn, lang, accessTier,
           </div>
         )}
         <div
-          className="prose-reading relative font-serif text-[17px] leading-relaxed text-text-main"
+          className="prose max-w-none [--tw-prose-body:rgb(var(--tw-text-main))] [--tw-prose-headings:rgb(var(--tw-text-main))] [--tw-prose-links:rgb(var(--tw-primary))] [--tw-prose-bold:rgb(var(--tw-text-main))] [--tw-prose-counters:rgb(var(--tw-muted))] [--tw-prose-bullets:rgb(var(--tw-muted))] [--tw-prose-quotes:rgb(var(--tw-text-main))] prose-headings:font-serif prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-amber-tcm prose-reading relative font-serif text-[17px] leading-relaxed text-text-main"
           dangerouslySetInnerHTML={{ __html: markdownToHtml(preview) }}
         />
         <div className="mt-8">
@@ -90,8 +134,8 @@ export default function ArticleContent({ contentId, contentEn, lang, accessTier,
         </div>
       )}
       <div
-        className="prose-reading font-serif text-[17px] leading-relaxed text-text-main"
-        dangerouslySetInnerHTML={{ __html: markdownToHtml(content || "") }}
+        className="prose max-w-none [--tw-prose-body:rgb(var(--tw-text-main))] [--tw-prose-headings:rgb(var(--tw-text-main))] [--tw-prose-links:rgb(var(--tw-primary))] [--tw-prose-bold:rgb(var(--tw-text-main))] [--tw-prose-counters:rgb(var(--tw-muted))] [--tw-prose-bullets:rgb(var(--tw-muted))] [--tw-prose-quotes:rgb(var(--tw-text-main))] prose-headings:font-serif prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-amber-tcm prose-reading font-serif text-[17px] leading-relaxed text-text-main"
+        dangerouslySetInnerHTML={{ __html: renderRichContent(renderedContent || "") }}
       />
     </>
   );

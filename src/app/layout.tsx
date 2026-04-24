@@ -63,7 +63,7 @@ export default function RootLayout({
         <QueryProvider>
           <ToastProvider>
             <Navbar />
-            <main>{children}</main>
+            <main suppressHydrationWarning>{children}</main>
             <Footer />
           </ToastProvider>
         </QueryProvider>
