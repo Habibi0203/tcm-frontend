@@ -123,9 +123,9 @@ export default async function ProfilPage({ params }: { params: { username: strin
       {userArticles.length > 0 && (
         <section className="mb-10">
           <h2 className="mb-4 font-display text-2xl font-bold">Artikel Kontribusi</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-4">
             {userArticles.map((a) => (
-              <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} />
+              <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} variant="list" />
             ))}
           </div>
         </section>

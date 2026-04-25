@@ -74,9 +74,9 @@ export default async function KategoriPage({ params }: { params: { slug: string 
       </header>
 
       {articles.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-4">
           {articles.map((a) => (
-            <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} />
+            <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} variant="list" />
           ))}
         </div>
       ) : (

@@ -28,6 +28,7 @@ interface ArticleCardProps {
 
 export default function ArticleCard({ article, variant = "grid" }: ArticleCardProps) {
   const safeThumbnail = article.thumbnail_url?.trim() || null;
+  const excerpt = article.excerpt?.trim() || "Buka artikel untuk membaca selengkapnya.";
 
   if (variant === "compact") {
     return (
@@ -35,8 +36,8 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
         href={`/artikel/${article.slug}`}
         className="flex gap-3 rounded-lg p-2 transition-colors hover:bg-surface"
       >
-        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
-          {safeThumbnail ? (
+        {safeThumbnail ? (
+          <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
             <Image
               src={safeThumbnail}
               alt={article.title}
@@ -44,17 +45,13 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
               sizes="64px"
               className="object-cover"
             />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-primary-light px-2 text-center text-[10px] font-semibold text-primary">
-              TCM
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
+          </div>
+        ) : null}
+        <div className="min-w-0 flex-1">
           <h4 className="line-clamp-2 text-sm font-medium text-text-main">{article.title}</h4>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted">
             <Clock size={12} />
-            <span>{article.read_time_minutes} min baca</span>
+            <span>{article.read_time_minutes ?? 1} min baca</span>
           </div>
         </div>
       </Link>
@@ -65,42 +62,30 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
     return (
       <Link
         href={`/artikel/${article.slug}`}
-        className="group flex flex-col gap-4 rounded-xl border border-border-main bg-card p-4 transition-shadow hover:shadow-md sm:flex-row"
+        className="group block rounded-xl border border-border-main bg-card p-5 transition-shadow hover:shadow-md"
       >
-        <div className="relative h-48 w-full flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-32 sm:w-48">
-          {safeThumbnail ? (
-            <Image
-              src={safeThumbnail}
-              alt={article.title}
-              fill
-              sizes="(max-width: 640px) 100vw, 192px"
-              className="object-cover transition-transform group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-primary-light px-4 text-center text-sm font-semibold text-primary">
-              Artikel TCM
-            </div>
-          )}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <CategoryBadge name={article.category.name} slug={article.category.slug} color={article.category.color_hex} asSpan />
           {article.access_tier === "premium" && (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-amber-tcm px-2 py-0.5 text-xs font-semibold text-white">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-tcm px-2 py-0.5 text-xs font-semibold text-white">
               <Lock size={10} /> Premium
             </span>
           )}
+          {article.published_at && (
+            <span className="text-xs text-muted">{formatRelativeTime(article.published_at)}</span>
+          )}
         </div>
-        <div className="flex-1">
-          <div className="mb-2 flex items-center gap-2">
-            <CategoryBadge name={article.category.name} slug={article.category.slug} color={article.category.color_hex} asSpan />
-          </div>
-          <h3 className="mb-2 text-lg font-display font-semibold text-text-main group-hover:text-primary line-clamp-2">
-            {article.title}
-          </h3>
-          <p className="mb-3 line-clamp-2 text-sm text-muted">{article.excerpt}</p>
-          <div className="flex items-center gap-4 text-xs text-muted">
-            <span>{article.author?.display_name ?? "Anonim"}</span>
-            <span className="flex items-center gap-1"><Clock size={12} />{article.read_time_minutes} min</span>
-            <span className="flex items-center gap-1"><Eye size={12} />{article.view_count}</span>
-            <span className="flex items-center gap-1"><MessageCircle size={12} />{article.comment_count}</span>
-          </div>
+
+        <h3 className="mb-2 line-clamp-2 font-display text-xl font-semibold text-text-main group-hover:text-primary">
+          {article.title}
+        </h3>
+        <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-muted">{excerpt}</p>
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
+          <span>{article.author?.display_name ?? "Anonim"}</span>
+          <span className="flex items-center gap-1"><Clock size={12} />{article.read_time_minutes ?? 1} min</span>
+          <span className="flex items-center gap-1"><Eye size={12} />{article.view_count}</span>
+          <span className="flex items-center gap-1"><MessageCircle size={12} />{article.comment_count}</span>
         </div>
       </Link>
     );
@@ -109,44 +94,28 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
   return (
     <Link
       href={`/artikel/${article.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border-main bg-card transition-all hover:shadow-lg"
+      className="group flex h-full flex-col rounded-xl border border-border-main bg-card p-5 transition-all hover:shadow-md"
     >
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
-        {safeThumbnail ? (
-          <Image
-            src={safeThumbnail}
-            alt={article.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-light to-surface px-6 text-center text-base font-semibold text-primary">
-            {article.title}
-          </div>
-        )}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <CategoryBadge name={article.category.name} slug={article.category.slug} color={article.category.color_hex} asSpan />
         {article.access_tier === "premium" && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-amber-tcm px-2.5 py-1 text-xs font-semibold text-white">
-            <Lock size={12} /> Premium
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-tcm px-2 py-0.5 text-xs font-semibold text-white">
+            <Lock size={10} /> Premium
           </span>
         )}
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <div className="mb-2">
-          <CategoryBadge name={article.category.name} slug={article.category.slug} color={article.category.color_hex} asSpan />
-        </div>
-        <h3 className="mb-2 line-clamp-2 font-display text-lg font-semibold text-text-main group-hover:text-primary">
-          {article.title}
-        </h3>
-        <p className="mb-3 line-clamp-2 flex-1 text-sm text-muted">{article.excerpt}</p>
-        <div className="mt-auto flex items-center justify-between text-xs text-muted">
-          <span className="truncate">{article.author?.display_name ?? "Anonim"}</span>
-          <span className="flex items-center gap-1 flex-shrink-0">
-            <Clock size={12} /> {article.read_time_minutes} min
-          </span>
-        </div>
-        {article.published_at && <div className="mt-2 text-xs text-muted">{formatRelativeTime(article.published_at)}</div>}
+
+      <h3 className="mb-2 line-clamp-2 font-display text-lg font-semibold text-text-main group-hover:text-primary">
+        {article.title}
+      </h3>
+      <p className="mb-4 line-clamp-3 flex-1 text-sm leading-relaxed text-muted">{excerpt}</p>
+
+      <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
+        <span className="truncate">{article.author?.display_name ?? "Anonim"}</span>
+        <span className="flex items-center gap-1"><Clock size={12} /> {article.read_time_minutes ?? 1} min</span>
+        <span className="flex items-center gap-1"><Eye size={12} /> {article.view_count}</span>
       </div>
+      {article.published_at && <div className="mt-2 text-xs text-muted">{formatRelativeTime(article.published_at)}</div>}
     </Link>
   );
 }

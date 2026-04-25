@@ -1,14 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, LayoutGrid, List } from "lucide-react";
+import { Search } from "lucide-react";
 import ArticleCard from "@/components/ui/ArticleCard";
 import { apiFetch } from "@/lib/api";
 
 type SortOption = "latest" | "popular" | "most_commented";
-type ViewMode   = "grid" | "list";
-
-const VIEW_KEY = "tcm-article-view";
 
 interface CategoryItem {
   id: string;
@@ -54,17 +51,10 @@ export default function ArtikelPage() {
   const [debouncedQ,   setDebouncedQ]   = useState("");
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
   const [sort,         setSort]         = useState<SortOption>("latest");
-  const [view,         setView]         = useState<ViewMode>("grid");
   const [articles,     setArticles]     = useState<ArticleListItem[]>([]);
   const [categories,   setCategories]   = useState<CategoryItem[]>([]);
   const [total,        setTotal]        = useState(0);
   const [loading,      setLoading]      = useState(true);
-
-  // Rehydrate view from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem(VIEW_KEY);
-    if (saved === "list" || saved === "grid") setView(saved);
-  }, []);
 
   // Fetch categories once
   useEffect(() => {
@@ -97,11 +87,6 @@ export default function ArtikelPage() {
 
   useEffect(() => { fetchArticles(); }, [fetchArticles]);
 
-  function handleViewChange(v: ViewMode) {
-    setView(v);
-    localStorage.setItem(VIEW_KEY, v);
-  }
-
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <header className="mb-8">
@@ -131,7 +116,7 @@ export default function ArtikelPage() {
         ))}
       </div>
 
-      {/* Sort + View toggle */}
+      {/* Sort */}
       <div className="mb-6 flex items-center justify-between gap-3">
         <div className="text-sm text-muted">{loading ? "Memuat..." : `${total} artikel ditemukan`}</div>
         <div className="flex items-center gap-2">
@@ -141,30 +126,20 @@ export default function ArtikelPage() {
             <option value="popular">Terpopuler</option>
             <option value="most_commented">Terbanyak Komentar</option>
           </select>
-          <div className="flex overflow-hidden rounded-lg border border-border-main">
-            <button onClick={() => handleViewChange("grid")}
-              className={`p-2 transition-colors ${view === "grid" ? "bg-primary text-white" : "bg-white text-muted hover:bg-surface"}`} aria-label="Grid view">
-              <LayoutGrid size={16} />
-            </button>
-            <button onClick={() => handleViewChange("list")}
-              className={`p-2 transition-colors ${view === "list" ? "bg-primary text-white" : "bg-white text-muted hover:bg-surface"}`} aria-label="List view">
-              <List size={16} />
-            </button>
-          </div>
         </div>
       </div>
 
       {/* Article list */}
       {loading ? (
-        <div className={view === "grid" ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-4"}>
+        <div className="flex flex-col gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-64 animate-pulse rounded-xl bg-border-main/30" />
+            <div key={i} className="h-40 animate-pulse rounded-xl bg-border-main/30" />
           ))}
         </div>
       ) : articles.length > 0 ? (
-        <div className={view === "grid" ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-4"}>
+        <div className="flex flex-col gap-4">
           {articles.map((a) => (
-            <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} variant={view === "list" ? "list" : "grid"} />
+            <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} variant="list" />
           ))}
         </div>
       ) : (

@@ -132,9 +132,9 @@ export default async function HomePage() {
           </Link>
         </div>
         {latestArticles.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-4">
             {latestArticles.map((a) => (
-              <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} />
+              <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} variant="list" />
             ))}
           </div>
         ) : (
