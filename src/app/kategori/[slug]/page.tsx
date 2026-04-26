@@ -52,6 +52,11 @@ export default async function KategoriPage({ params }: { params: { slug: string 
   if (!category) notFound();
 
   const articles = artRes.success ? artRes.data : [];
+  const hasCustomColor = !!category.color_hex?.trim();
+  const headerStyle = hasCustomColor ? { backgroundColor: category.color_hex } : undefined;
+  const headerClassName = hasCustomColor
+    ? "mb-10 rounded-2xl p-8 text-white shadow-sm"
+    : "mb-10 rounded-2xl bg-gradient-to-r from-primary to-primary-dark p-8 text-white shadow-sm";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -59,14 +64,11 @@ export default async function KategoriPage({ params }: { params: { slug: string 
         <ArrowLeft size={14} /> Kembali ke Artikel
       </Link>
 
-      <header
-        className="mb-10 rounded-2xl p-8 text-white"
-        style={{ backgroundColor: category.color_hex }}
-      >
-        <span className="inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-semibold uppercase">
+      <header className={headerClassName} style={headerStyle}>
+        <span className="inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
           Kategori
         </span>
-        <h1 className="mt-3 font-display text-4xl font-bold">{category.name}</h1>
+        <h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">{category.name}</h1>
         {category.description && (
           <p className="mt-2 max-w-2xl text-white/90">{category.description}</p>
         )}
