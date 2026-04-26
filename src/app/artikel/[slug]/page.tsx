@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/utils";
 import CategoryBadge from "@/components/ui/CategoryBadge";
 import MemberBadge from "@/components/ui/MemberBadge";
 import ArticleContent from "./ArticleContent";
+import ArticleComments, { type ArticleCommentItem } from "./ArticleComments";
 
 interface ArticleDetail {
   id:            string;
@@ -27,13 +28,6 @@ interface ArticleDetail {
   read_time_minutes: number | null;
   category: { id?: string; name: string; slug: string; color_hex: string | null } | null;
   author:   { id: string; username: string; display_name: string; avatar_url: string | null; role: string; bio?: string | null } | null;
-}
-
-interface Comment {
-  id:         string;
-  content:    string;
-  created_at: string;
-  author:     { id: string; username: string; display_name: string; avatar_url: string | null; role: string } | null;
 }
 
 interface PageProps {
@@ -70,7 +64,8 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
   const article = await getArticleBySlug(params.slug);
 
   if (!article) notFound();
-  const comments: Comment[] = [];
+  const commentsRes = await serverFetch<ArticleCommentItem[]>(`/articles/${article.id}/comments`);
+  const comments = commentsRes.success ? commentsRes.data : [];
   const lang = searchParams.lang === "en" ? "en" : "id";
 
   return (
@@ -175,36 +170,7 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
             title={article.title}
           />
 
-          {/* Comments */}
-          {comments.length > 0 && (
-            <section className="mt-10 border-t border-border-main pt-8">
-              <h2 className="mb-4 font-display text-xl font-bold text-text-main">
-                Diskusi ({comments.length})
-              </h2>
-              <div className="space-y-4">
-                {comments.map((c) => (
-                  <div key={c.id} className="flex gap-3 rounded-xl border border-border-main p-4">
-                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-border-main">
-                      {c.author?.avatar_url ? (
-                        <Image src={c.author.avatar_url} alt={c.author.display_name} width={36} height={36} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs font-bold text-primary">
-                          {(c.author?.display_name ?? "?")[0]}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="mb-1 flex items-center gap-2">
-                        <span className="text-sm font-semibold text-text-main">{c.author?.display_name ?? "Anonim"}</span>
-                        <span className="text-xs text-muted">{formatDate(c.created_at)}</span>
-                      </div>
-                      <p className="text-sm text-text-main">{c.content}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          <ArticleComments articleId={article.id} initialComments={comments} />
         </article>
 
         <aside>
