@@ -67,14 +67,20 @@ export default async function HomePage() {
   const [articlesRes, subforumsRes, statsRes] = await Promise.all([
     serverFetch<ArticleListItem[]>("/articles?sort=newest&per_page=6"),
     serverFetch<SubforumItem[]>("/subforums"),
-    serverFetch<StatsData>("/admin/stats"),
+    serverFetch<StatsData>("/stats"),
   ]);
 
   const latestArticles = articlesRes.success ? articlesRes.data : [];
+  const totalArticles = articlesRes.success ? (articlesRes.meta?.total ?? articlesRes.data.length) : 0;
   const subforums = subforumsRes.success ? subforumsRes.data : [];
   const stats: StatsData = statsRes.success
     ? statsRes.data
-    : { total_articles: 0, total_members: 0, active_subforums: 0, verified_practitioners: 0 };
+    : {
+        total_articles: totalArticles,
+        total_members: 0,
+        active_subforums: subforums.length,
+        verified_practitioners: 0,
+      };
 
   return (
     <>
