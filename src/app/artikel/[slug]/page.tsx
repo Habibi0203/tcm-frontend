@@ -7,7 +7,6 @@ import { serverFetch } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import CategoryBadge from "@/components/ui/CategoryBadge";
 import MemberBadge from "@/components/ui/MemberBadge";
-import TranslateToggle from "@/components/ui/TranslateToggle";
 import ArticleContent from "./ArticleContent";
 
 interface ArticleDetail {
@@ -105,7 +104,6 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
                 👑 Premium
               </span>
             )}
-            <TranslateToggle hasEnglish={!!article.content_en} />
           </div>
 
           <h1 className="mb-4 font-display text-3xl font-bold leading-snug text-text-main md:text-4xl">
