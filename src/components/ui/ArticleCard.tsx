@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Clock, Lock, Eye, MessageCircle } from "lucide-react";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import CategoryBadge from "./CategoryBadge";
 
 interface ArticleData {
@@ -28,7 +28,6 @@ interface ArticleCardProps {
 
 export default function ArticleCard({ article, variant = "grid" }: ArticleCardProps) {
   const safeThumbnail = article.thumbnail_url?.trim() || null;
-  const excerpt = article.excerpt?.trim() || "Buka artikel untuk membaca selengkapnya.";
 
   if (variant === "compact") {
     return (
@@ -71,19 +70,15 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
               <Lock size={10} /> Premium
             </span>
           )}
-          {article.published_at && (
-            <span className="text-xs text-muted">{formatRelativeTime(article.published_at)}</span>
-          )}
         </div>
 
-        <h3 className="mb-2 line-clamp-2 font-display text-xl font-semibold text-text-main group-hover:text-primary">
+        <h3 className="mb-3 line-clamp-2 font-display text-xl font-semibold text-text-main group-hover:text-primary">
           {article.title}
         </h3>
-        <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-muted">{excerpt}</p>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
           <span>{article.author?.display_name ?? "Anonim"}</span>
-          <span className="flex items-center gap-1"><Clock size={12} />{article.read_time_minutes ?? 1} min</span>
+          {article.published_at && <span className="flex items-center gap-1"><Clock size={12} />{formatDate(article.published_at)}</span>}
           <span className="flex items-center gap-1"><Eye size={12} />{article.view_count}</span>
           <span className="flex items-center gap-1"><MessageCircle size={12} />{article.comment_count}</span>
         </div>
@@ -105,17 +100,16 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
         )}
       </div>
 
-      <h3 className="mb-2 line-clamp-2 font-display text-lg font-semibold text-text-main group-hover:text-primary">
+      <h3 className="mb-3 line-clamp-2 font-display text-lg font-semibold text-text-main group-hover:text-primary">
         {article.title}
       </h3>
-      <p className="mb-4 line-clamp-3 flex-1 text-sm leading-relaxed text-muted">{excerpt}</p>
 
       <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
         <span className="truncate">{article.author?.display_name ?? "Anonim"}</span>
-        <span className="flex items-center gap-1"><Clock size={12} /> {article.read_time_minutes ?? 1} min</span>
+        {article.published_at && <span className="flex items-center gap-1"><Clock size={12} /> {formatDate(article.published_at)}</span>}
         <span className="flex items-center gap-1"><Eye size={12} /> {article.view_count}</span>
+        <span className="flex items-center gap-1"><MessageCircle size={12} /> {article.comment_count}</span>
       </div>
-      {article.published_at && <div className="mt-2 text-xs text-muted">{formatRelativeTime(article.published_at)}</div>}
     </Link>
   );
 }

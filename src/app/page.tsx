@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "tcm.my.id — Komunitas Traditional Chinese Medicine Indonesia",
   description:
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
-import { ArrowRight, BookOpen, Users, MessageCircle, Stethoscope } from "lucide-react";
+import { ArrowRight, BookOpen, Users, MessageCircle } from "lucide-react";
 import { serverFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
 
@@ -118,11 +120,10 @@ export default async function HomePage() {
 
       {/* Stats */}
       <section className="border-b border-border-main bg-white">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 md:grid-cols-4 lg:px-8">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 md:grid-cols-3 lg:px-8">
           <StatCard icon={<BookOpen size={22} />} value={stats.total_articles} label="Artikel" />
           <StatCard icon={<Users size={22} />} value={stats.total_members} label="Member" />
           <StatCard icon={<MessageCircle size={22} />} value={stats.active_subforums || subforums.length} label="Subforum Aktif" />
-          <StatCard icon={<Stethoscope size={22} />} value={stats.verified_practitioners} label="Praktisi Terverifikasi" />
         </div>
       </section>
 
@@ -131,7 +132,7 @@ export default async function HomePage() {
         <div className="mb-8 flex items-end justify-between">
           <div>
             <h2 className="font-display text-3xl font-bold text-text-main">Artikel Terbaru</h2>
-            <p className="mt-1 text-muted">Update mingguan dari tim editor dan praktisi kami</p>
+            <p className="mt-1 text-muted">Update terbaru dari artikel TCM yang sudah tayang</p>
           </div>
           <Link href="/artikel" className="hidden items-center gap-1 text-sm font-medium text-primary hover:text-primary-dark sm:inline-flex">
             Lihat Semua <ArrowRight size={16} />
