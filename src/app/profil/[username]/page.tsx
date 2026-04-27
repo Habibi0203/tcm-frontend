@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils";
 import ArticleCard from "@/components/ui/ArticleCard";
 import MemberBadge from "@/components/ui/MemberBadge";
 import ThreadRow from "@/components/ui/ThreadRow";
+import ProfileArticleActions from "@/components/ui/ProfileArticleActions";
 
 interface UserProfile {
   id: string;
@@ -125,7 +126,10 @@ export default async function ProfilPage({ params }: { params: { username: strin
           <h2 className="mb-4 font-display text-2xl font-bold">Artikel Kontribusi</h2>
           <div className="flex flex-col gap-4">
             {userArticles.map((a) => (
-              <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} variant="list" />
+              <div key={a.id}>
+                <ArticleCard article={a as Parameters<typeof ArticleCard>[0]["article"]} variant="list" />
+                <ProfileArticleActions articleId={a.id} slug={a.slug} authorId={a.author?.id} />
+              </div>
             ))}
           </div>
         </section>

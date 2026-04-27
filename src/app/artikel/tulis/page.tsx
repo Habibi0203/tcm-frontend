@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -19,25 +19,51 @@ interface CategoryItem {
   slug: string;
 }
 
+interface ArticleDetail {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  access_tier: "free" | "premium";
+  status: string;
+  category: { id: string; name: string; slug: string; color_hex: string } | null;
+}
+
 export default function TulisArtikelPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated, access_token, _hasHydrated } = useAuthStore();
   const { toast } = useToast();
 
-  const [title,       setTitle]      = useState("");
-  const [excerpt,     setExcerpt]    = useState("");
-  const [categoryId,  setCategoryId] = useState("");
-  const [accessTier,  setAccessTier] = useState<"free" | "premium">("free");
+  const editId = searchParams.get("edit")?.trim() || "";
+  const editSlug = searchParams.get("slug")?.trim() || "";
+  const isEditMode = Boolean(editId && editSlug);
+
+  const [title, setTitle] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [accessTier, setAccessTier] = useState<"free" | "premium">("free");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted,   setSubmitted]  = useState(false);
-  const [categories, setCategories]  = useState<CategoryItem[]>([]);
+  const [submitted, setSubmitted] = useState(false);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [isLoadingArticle, setIsLoadingArticle] = useState(false);
+  const [loadedArticle, setLoadedArticle] = useState<ArticleDetail | null>(null);
+
+  const pageTitle = useMemo(() => (isEditMode ? "Edit Artikel" : "Tulis Artikel"), [isEditMode]);
+  const pageDescription = useMemo(
+    () =>
+      isEditMode
+        ? "Perbarui isi artikel Anda lalu simpan perubahan."
+        : "Artikel akan masuk queue review sebelum dipublikasikan.",
+    [isEditMode],
+  );
 
   useEffect(() => {
     if (!_hasHydrated) return;
     if (!isAuthenticated) router.push("/masuk");
   }, [isAuthenticated, _hasHydrated, router]);
 
-  // Fetch categories from API
   useEffect(() => {
     async function loadCategories() {
       const res = await apiFetch<CategoryItem[]>("/articles/categories");
@@ -60,6 +86,49 @@ export default function TulisArtikelPage() {
     },
   });
 
+  useEffect(() => {
+    if (!_hasHydrated || !isAuthenticated || !access_token || !isEditMode) return;
+
+    let cancelled = false;
+
+    async function loadArticle() {
+      setIsLoadingArticle(true);
+      const res = await apiFetch<ArticleDetail>(`/articles/${encodeURIComponent(editSlug)}`, {
+        token: access_token ?? undefined,
+      });
+      if (cancelled) return;
+
+      setIsLoadingArticle(false);
+      if (!res.success) {
+        toast(res.error?.message || "Gagal memuat artikel untuk diedit.", "error");
+        return;
+      }
+
+      if (res.data.id !== editId) {
+        toast("Artikel edit tidak cocok dengan data yang diminta.", "error");
+        return;
+      }
+
+      setLoadedArticle(res.data);
+      setTitle(res.data.title || "");
+      setExcerpt(res.data.excerpt || "");
+      setCategoryId(res.data.category?.id || "");
+      setAccessTier(res.data.access_tier || "free");
+    }
+
+    loadArticle();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [_hasHydrated, isAuthenticated, access_token, isEditMode, editId, editSlug, toast]);
+
+  useEffect(() => {
+    if (!editor || !loadedArticle) return;
+    if (editor.getHTML() === loadedArticle.content) return;
+    editor.commands.setContent(loadedArticle.content || "");
+  }, [editor, loadedArticle]);
+
   if (!user) return null;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -69,41 +138,60 @@ export default function TulisArtikelPage() {
       toast("Judul, konten, dan kategori wajib diisi.", "error");
       return;
     }
+
     setIsSubmitting(true);
 
-    const res = await apiFetch("/articles", {
-      method: "POST",
-      token: access_token ?? undefined,
-      body: {
-        title: title.trim(),
-        excerpt: excerpt.trim() || undefined,
-        content,
-        category_id: categoryId,
-        access_tier: accessTier,
-      },
-    });
+    const body = {
+      title: title.trim(),
+      excerpt: excerpt.trim() || undefined,
+      content,
+      category_id: categoryId,
+      access_tier: accessTier,
+    };
+
+    const res = isEditMode
+      ? await apiFetch<{ id: string; slug: string; status: string }>(`/articles/${encodeURIComponent(editId)}`, {
+          method: "PATCH",
+          token: access_token ?? undefined,
+          body,
+        })
+      : await apiFetch<{ id: string; slug: string; status: string }>("/articles", {
+          method: "POST",
+          token: access_token ?? undefined,
+          body,
+        });
 
     setIsSubmitting(false);
     if (res.success) {
       setSubmitted(true);
-      toast("Artikel dikirim untuk review!", "success");
-      setTimeout(() => router.push("/dashboard"), 1500);
+      toast(isEditMode ? "Perubahan artikel berhasil disimpan!" : "Artikel dikirim untuk review!", "success");
+      setTimeout(() => {
+        if (isEditMode) {
+          router.push(`/artikel/${loadedArticle?.slug || editSlug}`);
+        } else {
+          router.push("/dashboard");
+        }
+      }, 1200);
     } else {
-      toast(res.error?.message || "Gagal mengirim artikel.", "error");
+      toast(res.error?.message || (isEditMode ? "Gagal menyimpan perubahan artikel." : "Gagal mengirim artikel."), "error");
     }
   }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
       <header className="mb-8">
-        <h1 className="font-display text-3xl font-bold text-text-main">Tulis Artikel</h1>
-        <p className="mt-1 text-sm text-muted">
-          Artikel akan masuk queue review sebelum dipublikasikan.
-        </p>
+        <h1 className="font-display text-3xl font-bold text-text-main">{pageTitle}</h1>
+        <p className="mt-1 text-sm text-muted">{pageDescription}</p>
       </header>
 
+      {isEditMode && isLoadingArticle ? (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-border-main bg-white px-4 py-4 text-sm text-muted">
+          <Loader2 size={18} className="animate-spin" />
+          Memuat artikel yang akan diedit…
+        </div>
+      ) : null}
+
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title */}
         <div>
           <label className="mb-1 block text-sm font-medium text-text-main">
             Judul <span className="text-red-500">*</span>
@@ -119,7 +207,6 @@ export default function TulisArtikelPage() {
           />
         </div>
 
-        {/* Excerpt */}
         <div>
           <label className="mb-1 block text-sm font-medium text-text-main">
             Ringkasan <span className="text-muted">(opsional)</span>
@@ -134,7 +221,6 @@ export default function TulisArtikelPage() {
           />
         </div>
 
-        {/* Metadata row */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-text-main">
@@ -165,13 +251,11 @@ export default function TulisArtikelPage() {
           </div>
         </div>
 
-        {/* Tiptap editor */}
         <div>
           <label className="mb-1 block text-sm font-medium text-text-main">
             Konten <span className="text-red-500">*</span>
           </label>
           <div className="overflow-hidden rounded-xl border border-border-main bg-white focus-within:border-primary">
-            {/* Toolbar */}
             {editor && (
               <div className="flex flex-wrap items-center gap-1 border-b border-border-main bg-surface px-3 py-2">
                 <ToolbarBtn
@@ -246,16 +330,19 @@ export default function TulisArtikelPage() {
           </div>
         </div>
 
-        {/* Submit */}
         <div className="flex items-center gap-4">
           <button
             type="submit"
-            disabled={isSubmitting || submitted}
+            disabled={isSubmitting || submitted || (isEditMode && isLoadingArticle)}
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-3 font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-            {submitted   && <Check    size={16} />}
-            {isSubmitting ? "Mengirim…" : submitted ? "Terkirim!" : "Kirim untuk Review"}
+            {submitted && <Check size={16} />}
+            {isSubmitting
+              ? (isEditMode ? "Menyimpan…" : "Mengirim…")
+              : submitted
+                ? (isEditMode ? "Tersimpan!" : "Terkirim!")
+                : (isEditMode ? "Simpan Perubahan" : "Kirim untuk Review")}
           </button>
           <button
             type="button"
