@@ -51,7 +51,7 @@ export default async function ForumPage() {
                 </div>
                 {s.access_tier === "premium" && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-light px-2 py-0.5 text-xs font-semibold text-amber-tcm">
-                    <Lock size={10} /> Premium
+                    <Lock size={10} /> Akses Khusus
                   </span>
                 )}
               </div>

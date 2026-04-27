@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback, Suspense } from "react";
-import { BookOpen, Bell, Settings, Crown, Check, ExternalLink, KeyRound } from "lucide-react";
+import { BookOpen, Bell, Settings, Check, ExternalLink, KeyRound } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { apiFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
@@ -198,14 +198,6 @@ function DashboardInner() {
                 size="md"
               />
             </div>
-            {user.membership_tier === "free" && (
-              <Link
-                href="/upgrade"
-                className="mt-4 inline-flex w-full items-center justify-center gap-1 rounded-full bg-amber-tcm py-2 text-xs font-semibold text-white hover:bg-amber-tcm/90"
-              >
-                <Crown size={14} /> Upgrade Premium
-              </Link>
-            )}
           </div>
 
           {/* Tab nav */}

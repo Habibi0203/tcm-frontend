@@ -246,7 +246,7 @@ export default function TulisArtikelPage() {
               className="w-full rounded-xl border border-border-main bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none"
             >
               <option value="free">Gratis</option>
-              <option value="premium">Premium</option>
+              <option value="premium">Akses Khusus</option>
             </select>
           </div>
         </div>

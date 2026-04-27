@@ -67,7 +67,7 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
           <CategoryBadge name={article.category.name} slug={article.category.slug} color={article.category.color_hex} asSpan />
           {article.access_tier === "premium" && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-tcm px-2 py-0.5 text-xs font-semibold text-white">
-              <Lock size={10} /> Premium
+              <Lock size={10} /> Akses Khusus
             </span>
           )}
         </div>
@@ -95,7 +95,7 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
         <CategoryBadge name={article.category.name} slug={article.category.slug} color={article.category.color_hex} asSpan />
         {article.access_tier === "premium" && (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-tcm px-2 py-0.5 text-xs font-semibold text-white">
-            <Lock size={10} /> Premium
+            <Lock size={10} /> Akses Khusus
           </span>
         )}
       </div>

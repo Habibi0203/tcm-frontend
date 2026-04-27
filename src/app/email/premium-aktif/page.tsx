@@ -33,7 +33,7 @@ export default function PremiumAktifEmailPage() {
           }}>
             <span style={{ fontSize: "0.9rem" }}>👑</span>
             <span style={{ fontSize: "0.72rem", color: "#e8bc65", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
-              Member Premium
+              Akses Akun
             </span>
           </div>
         </div>
@@ -42,11 +42,11 @@ export default function PremiumAktifEmailPage() {
         {/* Body */}
         <div style={{ padding: "40px 40px 32px", backgroundColor: "#faf6ef" }}>
           <h1 style={{ fontSize: "1.6rem", color: "#1e1410", fontWeight: 700, marginBottom: "12px", lineHeight: 1.3 }}>
-            Selamat! Akun Premium Anda Aktif 🎉
+            Selamat! Akses Akun Anda Aktif 🎉
           </h1>
           <p style={{ color: "#4a3728", lineHeight: 1.7, marginBottom: "28px", fontSize: "0.95rem" }}>
-            Halo <strong>Budi</strong>, terima kasih telah bergabung sebagai <strong>Member Premium tcm.my.id</strong>.
-            Kini Anda memiliki akses penuh ke seluruh konten eksklusif dan fitur premium kami hingga{" "}
+            Halo <strong>Budi</strong>, terima kasih. Akses akun Anda di <strong>tcm.my.id</strong> kini sudah aktif.
+            Kini Anda memiliki akses penuh ke konten dan fitur yang tersedia untuk akun Anda hingga{" "}
             <strong style={{ color: "#3d2b1f" }}>{expiryDate}</strong>.
           </p>
 
@@ -57,7 +57,7 @@ export default function PremiumAktifEmailPage() {
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               {[
-                ["📚", "Semua artikel premium"],
+                ["📚", "Semua artikel akses khusus"],
                 ["💬", "Subforum eksklusif"],
                 ["🌐", "Terjemahan artikel (EN)"],
                 ["🔔", "Update mingguan"],
@@ -86,7 +86,7 @@ export default function PremiumAktifEmailPage() {
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
               <span style={{ fontSize: "0.82rem", color: "#8b5e3c" }}>Paket</span>
-              <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#1e1410" }}>Premium Tahunan</span>
+              <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#1e1410" }}>Akses Tahunan</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
               <span style={{ fontSize: "0.82rem", color: "#8b5e3c" }}>Aktif sejak</span>
@@ -109,7 +109,7 @@ export default function PremiumAktifEmailPage() {
                 textDecoration: "none", fontSize: "0.95rem",
               }}
             >
-              Jelajahi Konten Premium →
+              Jelajahi Konten →
             </a>
           </div>
 

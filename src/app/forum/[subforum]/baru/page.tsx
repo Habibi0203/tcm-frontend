@@ -159,7 +159,7 @@ export default function NewThreadPage() {
         <div className="mb-2 flex items-center gap-2">
           {subforum.access_tier === "premium" ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-light px-2 py-0.5 text-xs font-semibold text-amber-tcm">
-              <Lock size={10} /> Premium
+              <Lock size={10} /> Akses Khusus
             </span>
           ) : null}
         </div>
@@ -183,7 +183,7 @@ export default function NewThreadPage() {
       ) : needsPremium ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-light/30 p-6">
           <p className="text-sm text-text-main">
-            Subforum ini khusus member premium. Upgrade membership atau gunakan subforum gratis untuk membuat thread baru.
+            Area ini belum dibuka untuk semua akun. Untuk sementara, gunakan subforum umum terlebih dahulu.
           </p>
         </div>
       ) : (

@@ -13,7 +13,7 @@ interface PremiumGateProps {
 const SESSION_KEY = (slug: string) => `tcm_premium_dismissed_${slug}`;
 
 export default function PremiumGate({
-  title = "Artikel ini untuk Member Premium",
+  title = "Akses penuh artikel ini tersedia untuk akun tertentu",
   articleSlug,
 }: PremiumGateProps) {
   const [visible, setVisible] = useState(false);
@@ -33,11 +33,11 @@ export default function PremiumGate({
   if (!visible) return null;
 
   const benefits = [
-    "Akses seluruh artikel premium",
-    "Akses subforum premium & tanya praktisi",
+    "Akses artikel lengkap",
+    "Akses area diskusi tertentu",
     "Terjemahan artikel ke Bahasa Inggris",
     "Update protokol TCM terbaru setiap minggu",
-    "Priority support dari komunitas",
+    "Dukungan komunitas yang lebih dulu diperbarui",
   ];
 
   return (
@@ -61,7 +61,7 @@ export default function PremiumGate({
 
         <h3 className="mb-2 font-display text-2xl font-bold text-text-main">{title}</h3>
         <p className="mb-6 text-muted">
-          Upgrade ke Premium untuk membuka akses penuh ke konten eksklusif, protokol lengkap TCM, dan berbagai fitur lanjutan.
+          Sebagian konten saat ini masih dibuka bertahap. Masuk atau daftar dulu untuk mengikuti pembaruan akses berikutnya.
         </p>
 
         <ul className="mb-6 space-y-2">
@@ -78,13 +78,13 @@ export default function PremiumGate({
             href="/daftar"
             className="inline-flex items-center justify-center rounded-lg bg-amber-tcm px-6 py-3 font-semibold text-white transition-colors hover:bg-amber-tcm/90"
           >
-            Upgrade ke Premium
+            Daftar / Masuk
           </Link>
           <Link
             href="/masuk"
             className="inline-flex items-center justify-center rounded-lg border border-border-main bg-white px-6 py-3 font-medium text-text-main transition-colors hover:bg-surface"
           >
-            Sudah punya akun? Masuk
+            Sudah punya akun
           </Link>
         </div>
       </div>

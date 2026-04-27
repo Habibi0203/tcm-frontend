@@ -147,19 +147,19 @@ export function premiumAktifEmail(opts: {
     <div style="text-align:center;margin:0 0 20px;">
       <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(201,152,58,0.15);border:1px solid rgba(201,152,58,0.35);border-radius:999px;padding:5px 16px;">
         <span style="font-size:0.9rem;">👑</span>
-        <span style="font-size:0.7rem;color:#c9983a;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;font-family:sans-serif;">Member Premium</span>
+        <span style="font-size:0.7rem;color:#c9983a;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;font-family:sans-serif;">Akses Akun</span>
       </div>
     </div>
-    <h1 style="font-size:1.5rem;color:#1e1410;font-weight:700;margin:0 0 12px;line-height:1.3;">Selamat! Akun Premium Anda Aktif 🎉</h1>
+    <h1 style="font-size:1.5rem;color:#1e1410;font-weight:700;margin:0 0 12px;line-height:1.3;">Selamat! Akses Akun Anda Aktif 🎉</h1>
     <p style="color:#4a3728;line-height:1.7;margin:0 0 24px;font-size:0.92rem;">
-      Halo <strong>${safeName}</strong>, terima kasih telah bergabung sebagai <strong>Member Premium tcm.my.id</strong>.
+      Halo <strong>${safeName}</strong>, terima kasih. Akses akun Anda di <strong>tcm.my.id</strong> kini sudah aktif.
       Kini Anda memiliki akses penuh ke seluruh konten eksklusif hingga <strong style="color:#3d2b1f;">${safeExpiry}</strong>.
     </p>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;">
       <tr>
         <td width="50%" style="padding:0 6px 0 0;">
           <div style="background:#fff;border:1px solid #ddd0b8;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
-            <span style="font-size:1rem;">📚</span><span style="font-size:0.8rem;color:#4a3728;font-family:sans-serif;">Semua artikel premium</span>
+            <span style="font-size:1rem;">📚</span><span style="font-size:0.8rem;color:#4a3728;font-family:sans-serif;">Semua artikel akses khusus</span>
           </div>
         </td>
         <td width="50%" style="padding:0 0 0 6px;">
@@ -189,7 +189,7 @@ export function premiumAktifEmail(opts: {
     </div>
     <div style="text-align:center;margin:0 0 24px;">
       <a href="https://tcm.my.id/artikel" style="display:inline-block;background:#c9983a;color:#fff;padding:13px 34px;border-radius:8px;font-weight:600;text-decoration:none;font-size:0.92rem;font-family:sans-serif;">
-        Jelajahi Konten Premium →
+        Jelajahi Konten →
       </a>
     </div>
     <hr style="border:none;border-top:1px solid #ddd0b8;margin:0 0 16px;" />
@@ -199,7 +199,7 @@ export function premiumAktifEmail(opts: {
     </p>`);
 
   return {
-    subject: `👑 Selamat, akun Premium tcm.my.id Anda kini aktif!`,
+    subject: `👑 Selamat, akses akun tcm.my.id Anda kini aktif!`,
     html,
   };
 }

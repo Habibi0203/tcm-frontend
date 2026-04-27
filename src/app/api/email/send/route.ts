@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     case "premium-aktif": {
       const tpl = premiumAktifEmail({
         name:       data.name       ?? to.name ?? "Member",
-        plan:       data.plan       ?? "Premium Tahunan",
+        plan:       data.plan       ?? "Akses Tahunan",
         startDate:  data.startDate  ?? new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
         expiryDate: data.expiryDate ?? "—",
       });

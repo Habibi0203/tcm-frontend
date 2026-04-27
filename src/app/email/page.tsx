@@ -8,8 +8,8 @@ const templates = [
     payload: { data: { name: "Member Demo" } } },
   { slug: "reset-password",  label: "Reset Password",     desc: "Link reset password (berlaku 1 jam)",          icon: "🔐",
     payload: { data: { name: "Member Demo", resetUrl: "https://tcm.my.id/reset-password?token=demo123" } } },
-  { slug: "premium-aktif",   label: "Premium Aktif",      desc: "Konfirmasi upgrade ke membership premium",     icon: "👑",
-    payload: { data: { name: "Member Demo", plan: "Premium Tahunan", startDate: "19 Apr 2026", expiryDate: "19 Apr 2027" } } },
+  { slug: "premium-aktif",   label: "Akses Aktif",      desc: "Konfirmasi aktivasi akses akun",     icon: "👑",
+    payload: { data: { name: "Member Demo", plan: "Akses Tahunan", startDate: "19 Apr 2026", expiryDate: "19 Apr 2027" } } },
   { slug: "balasan-thread",  label: "Notifikasi Balasan", desc: "Ada balasan baru pada thread Anda",            icon: "💬",
     payload: { data: { recipientName: "Member Demo", threadTitle: "Pengalaman konsumsi Bai Zhu untuk pencernaan", threadUrl: "https://tcm.my.id/forum/diskusi-umum/thr_001", replierName: "Rina Andriani", replierInitials: "RA", replierRole: "Praktisi TCM", replySnippet: "Saya sudah menggunakannya selama 3 bulan untuk gangguan pencernaan kronis...", subforumName: "Diskusi Umum TCM" } } },
 ];

@@ -184,7 +184,6 @@ export default async function HomePage() {
           </h2>
           <p className="mt-3 max-w-2xl text-white/90">
             Daftar gratis dan dapatkan akses ke artikel edukatif, ruang diskusi komunitas, dan pembaruan konten berkala.
-            Upgrade kapan saja untuk akses premium.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link

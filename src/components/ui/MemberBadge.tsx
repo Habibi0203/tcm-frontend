@@ -1,4 +1,4 @@
-import { Shield, Crown, Stethoscope, User } from "lucide-react";
+import { Shield, Stethoscope, User } from "lucide-react";
 
 interface MemberBadgeProps {
   tier?: "free" | "premium";
@@ -35,8 +35,8 @@ export default function MemberBadge({ tier, role, isVerified, size = "sm" }: Mem
   }
   if (tier === "premium") {
     return (
-      <span className={`inline-flex items-center gap-1 rounded-full bg-amber-light text-amber-tcm font-medium ${textSize} ${padding}`}>
-        <Crown size={iconSize} /> Premium
+      <span className={`inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-600 font-medium ${textSize} ${padding}`}>
+        <User size={iconSize} /> Member
       </span>
     );
   }

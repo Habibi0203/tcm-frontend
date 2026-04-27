@@ -120,7 +120,7 @@ export default function ArticleContent({ content, contentEn, lang, accessTier, t
           dangerouslySetInnerHTML={{ __html: markdownToHtml(preview) }}
         />
         <div className="mt-8">
-          <PremiumGate title={`"${title}" untuk Member Premium`} />
+          <PremiumGate title={`Akses penuh untuk "${title}" dibuka bertahap`} />
         </div>
       </>
     );
