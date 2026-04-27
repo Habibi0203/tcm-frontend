@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     "Platform komunitas TCM Indonesia. Edukasi, diskusi, dan sumber daya tepercaya tentang Traditional Chinese Medicine untuk pemula hingga praktisi.",
   openGraph: {
     title: "tcm.my.id — Komunitas TCM Indonesia",
-    description: "Edukasi TCM berbasis bukti, forum diskusi, dan akses ke praktisi terverifikasi.",
+    description: "Edukasi TCM, ruang diskusi komunitas, dan konten editorial yang disusun bertahap.",
     type: "website",
   },
 };
@@ -97,8 +97,8 @@ export default async function HomePage() {
               Jalan Harmoni Menuju <span className="text-primary">Kesehatan Holistik</span>
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-muted">
-              Pelajari Traditional Chinese Medicine dari dasar hingga lanjutan. Diskusi bersama komunitas,
-              konsultasi dengan praktisi, dan temukan pendekatan holistik untuk tubuh, pikiran, dan jiwa.
+              Pelajari Traditional Chinese Medicine dari dasar hingga lanjutan lewat artikel,
+              pembahasan komunitas, dan konten editorial yang terus kami rapikan setahap demi setahap.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -183,7 +183,7 @@ export default async function HomePage() {
             Mulai Perjalanan TCM Anda Hari Ini
           </h2>
           <p className="mt-3 max-w-2xl text-white/90">
-            Daftar gratis dan dapatkan akses ke artikel edukatif, forum diskusi, dan komunitas yang mendukung.
+            Daftar gratis dan dapatkan akses ke artikel edukatif, ruang diskusi komunitas, dan pembaruan konten berkala.
             Upgrade kapan saja untuk akses premium.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">

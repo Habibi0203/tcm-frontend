@@ -5,27 +5,33 @@ import { CheckCircle2, AlertTriangle } from "lucide-react";
 export const metadata: Metadata = {
   title: "Tentang Kami — tcm.my.id",
   description:
-    "Pelajari misi, tim, dan komitmen editorial platform komunitas TCM Indonesia tcm.my.id.",
+    "Pelajari misi, tim, dan pendekatan editorial tcm.my.id.",
 };
 
 const TEAM = [
   {
-    name: "Dr. Sari Wijaya",
-    role: "Penasihat Medis & Praktisi TCM",
-    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=SariWijaya&backgroundColor=3C3489&fontColor=ffffff",
-    bio: "Praktisi TCM berlisensi dengan 12 tahun pengalaman, spesialis akupuntur dan herbal.",
+    name: "Bang Dzulfi",
+    role: "Penulis Edukasi TCM",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=BangDzulfi&backgroundColor=3C3489&fontColor=ffffff",
+    bio: "Fokus pada penjelasan konsep dasar, pelurusan miskonsepsi, dan bahasa yang rapi serta hati-hati.",
   },
   {
-    name: "Rina Kusuma",
-    role: "Editor Konten",
-    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=RinaKusuma&backgroundColor=BA7517&fontColor=ffffff",
-    bio: "Penulis kesehatan integratif dan peneliti TCM independen. Fokus pada aksesibilitas informasi.",
+    name: "Arini",
+    role: "Penulis Gaya Hidup & Komunitas",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Arini&backgroundColor=BA7517&fontColor=ffffff",
+    bio: "Membawa bahasa yang hangat, ringan, dan mudah dipahami untuk pembaca umum yang baru belajar TCM.",
   },
   {
-    name: "Admin TCM",
+    name: "Bang Zub",
+    role: "Penulis Praktik & Herbal TCM",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=BangZub&backgroundColor=1D9E75&fontColor=ffffff",
+    bio: "Fokus pada penerapan praktis, pertanyaan lapangan, dan pembahasan yang dekat dengan kebutuhan pembaca.",
+  },
+  {
+    name: "Admin Web",
     role: "Pengelola Platform",
-    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=AdminTCM&backgroundColor=1D9E75&fontColor=ffffff",
-    bio: "Tim teknis dan komunitas yang memastikan platform berjalan lancar dan inklusif.",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=AdminWeb&backgroundColor=6B7280&fontColor=ffffff",
+    bio: "Menjaga website, alur publikasi, dan pembaruan teknis agar platform tetap rapi dan berjalan stabil.",
   },
 ];
 
@@ -41,8 +47,8 @@ export default function TentangPage() {
           Tentang <span className="text-primary">tcm.my.id</span>
         </h1>
         <p className="mx-auto max-w-2xl text-lg text-muted">
-          Platform komunitas Traditional Chinese Medicine pertama di Indonesia yang berfokus pada
-          edukasi berbasis bukti, diskusi terbuka, dan akses ke praktisi terverifikasi.
+          Ruang belajar dan publikasi TCM yang bertumbuh pelan-pelan, dengan fokus pada konten
+          yang lebih hati-hati, lebih mudah dipahami, dan lebih jujur soal batasannya.
         </p>
       </section>
 
@@ -57,23 +63,22 @@ export default function TentangPage() {
             merugikan masyarakat.
           </p>
           <p>
-            tcm.my.id berkomitmen menyajikan informasi TCM yang akurat, berbasis bukti, dan
-            disunting oleh praktisi berlisensi. Kami percaya bahwa pengetahuan kesehatan harus
-            terbuka dan dapat diakses oleh semua orang, bukan hanya mereka yang memiliki latar
-            belakang medis.
+            tcm.my.id berupaya menyajikan materi TCM yang lebih rapi, mudah diikuti, dan tidak
+            buru-buru membuat klaim. Konten kami disusun oleh tim penulis internal dengan gaya
+            editorial yang berbeda-beda, lalu ditinjau ulang agar tetap selaras dengan arah situs.
           </p>
           <p>
-            Melalui forum diskusi, artikel mendalam, dan fitur tanya jawab dengan praktisi, kami
-            membangun komunitas yang saling mendukung dalam perjalanan kesehatan holistik
-            masing-masing anggota.
+            Kami sedang membangun kombinasi artikel edukatif, profil penulis, dan ruang diskusi
+            komunitas secara bertahap. Fokus kami bukan terlihat besar di awal, tapi membuat fondasi
+            yang berguna dan bisa dipercaya.
           </p>
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {[
-            { label: "Artikel Terbit", value: "120+" },
-            { label: "Anggota Aktif", value: "3.200+" },
-            { label: "Praktisi Terverifikasi", value: "18" },
+            { label: "Fokus", value: "Edukasi TCM" },
+            { label: "Tim Inti", value: "4 Peran" },
+            { label: "Pengembangan", value: "Bertahap" },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-border-main bg-card p-5 text-center">
               <p className="font-display text-3xl font-bold text-primary">{s.value}</p>
@@ -86,7 +91,7 @@ export default function TentangPage() {
       {/* ── Tim Section ── */}
       <section className="mb-16">
         <h2 className="mb-6 font-display text-2xl font-bold text-text-main">Tim Kami</h2>
-        <div className="grid gap-6 sm:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {TEAM.map((m) => (
             <div key={m.name} className="rounded-2xl border border-border-main bg-card p-6 text-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
