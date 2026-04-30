@@ -19,28 +19,72 @@ interface ApiFetchOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
 }
 
+async function parseApiResult<T>(res: Response): Promise<ApiResult<T>> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as ApiResult<T>;
+  } catch {
+    return { success: false, error: { code: 'PARSE_ERROR', message: text || res.statusText } };
+  }
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const parsed = await parseApiResult<{ access_token: string }>(res);
+    if (!parsed.success || !parsed.data?.access_token) return null;
+
+    if (typeof window !== 'undefined') {
+      const { useAuthStore } = await import('@/store/authStore');
+      useAuthStore.getState().setToken(parsed.data.access_token);
+    }
+
+    return parsed.data.access_token;
+  } catch {
+    return null;
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   options: ApiFetchOptions = {}
 ): Promise<ApiResult<T>> {
   const { token, headers: extraHeaders, body, ...rest } = options;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(extraHeaders as Record<string, string> ?? {}),
-  };
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
+
+  const request = async (tokenOverride?: string | null) => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(tokenOverride ? { Authorization: `Bearer ${tokenOverride}` } : {}),
+      ...(extraHeaders as Record<string, string> ?? {}),
+    };
+
+    return fetch(`${API_BASE}${path}`, {
       ...rest,
+      credentials: 'same-origin',
       headers,
       body: body != null ? JSON.stringify(body) : undefined,
     });
-    const text = await res.text();
-    try {
-      return JSON.parse(text) as ApiResult<T>;
-    } catch {
-      return { success: false, error: { code: 'PARSE_ERROR', message: text || res.statusText } };
+  };
+
+  try {
+    let res = await request(token);
+
+    if (res.status === 401 && token) {
+      const refreshedToken = await refreshAccessToken();
+      if (refreshedToken) {
+        res = await request(refreshedToken);
+      } else if (typeof window !== 'undefined') {
+        const { useAuthStore } = await import('@/store/authStore');
+        useAuthStore.getState().logout();
+        return { success: false, error: { code: 'UNAUTHORIZED', message: 'Sesi login habis. Silakan masuk lagi.' } };
+      }
     }
+
+    return parseApiResult<T>(res);
   } catch (e) {
     return { success: false, error: { code: 'NETWORK_ERROR', message: String(e) } };
   }
