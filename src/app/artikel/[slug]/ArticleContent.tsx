@@ -60,8 +60,15 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&amp;/g, "&");
 }
 
+function stripTrailingDisclaimer(text: string): string {
+  return text
+    .replace(/<p[^>]*>\s*---\s*<\/p>\s*<p[^>]*>\s*<em>\s*Disclaimer:[\s\S]*?<\/em>\s*<\/p>\s*$/i, "")
+    .replace(/(?:\r?\n)\s*---\s*(?:\r?\n)+\s*\*?Disclaimer:[\s\S]*$/i, "")
+    .trim();
+}
+
 function normalizeArticleContent(text: string): string {
-  const decoded = decodeHtmlEntities(text);
+  const decoded = stripTrailingDisclaimer(decodeHtmlEntities(text));
 
   if (looksLikeHtml(decoded)) {
     return decoded

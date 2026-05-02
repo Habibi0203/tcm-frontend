@@ -36,6 +36,15 @@ interface PageProps {
   searchParams: { lang?: string };
 }
 
+function stripLegacyContentDisclaimer(text: string | null | undefined): string | null | undefined {
+  if (!text) return text;
+
+  return text
+    .replace(/<p[^>]*>\s*---\s*<\/p>\s*<p[^>]*>\s*<em>\s*Disclaimer:[\s\S]*?<\/em>\s*<\/p>\s*$/i, "")
+    .replace(/(?:\r?\n)\s*---\s*(?:\r?\n)+\s*\*?Disclaimer:[\s\S]*$/i, "")
+    .trim();
+}
+
 async function getArticleBySlug(slug: string): Promise<ArticleDetail | null> {
   const detailRes = await serverFetch<ArticleDetail>(`/articles/${encodeURIComponent(slug)}`, {
     cache: "no-store",
@@ -91,6 +100,8 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
   const comments = commentsRes.success ? commentsRes.data : [];
   const lang = searchParams.lang === "en" ? "en" : "id";
 
+  const cleanContent = stripLegacyContentDisclaimer(article.content ?? article.excerpt ?? "") ?? "";
+  const cleanContentEn = stripLegacyContentDisclaimer(article.content_en ?? null) ?? null;
   const articleUrl = `https://tcm.my.id/artikel/${article.slug}`;
   const articleSchema = {
     "@context": "https://schema.org",
@@ -209,22 +220,22 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
             </div>
           )}
 
-          {/* Disclaimer */}
-          {article.has_disclaimer && (
-            <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-300/50 bg-amber-light/50 px-4 py-3 text-sm text-text-main">
-              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-tcm" />
-              <span>Artikel ini bersifat informatif dan bukan pengganti diagnosis atau terapi individual. Untuk keputusan kesehatan pribadi, konsultasikan dengan praktisi TCM yang kompeten atau tenaga kesehatan sesuai kebutuhan Anda.</span>
-            </div>
-          )}
-
           {/* Content */}
           <ArticleContent
-            content={article.content ?? article.excerpt ?? ""}
-            contentEn={article.content_en ?? null}
+            content={cleanContent}
+            contentEn={cleanContentEn}
             lang={lang}
             accessTier={article.access_tier}
             title={article.title}
           />
+
+          {/* Disclaimer */}
+          {article.has_disclaimer && (
+            <div className="mt-8 flex items-start gap-3 rounded-xl border border-amber-300/50 bg-amber-light/50 px-4 py-3 text-sm text-text-main">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-tcm" />
+              <span>Artikel ini bersifat informatif dan bukan pengganti diagnosis atau terapi individual. Untuk keputusan kesehatan pribadi, konsultasikan dengan praktisi TCM yang kompeten atau tenaga kesehatan sesuai kebutuhan Anda.</span>
+            </div>
+          )}
 
           <ArticleComments articleId={article.id} initialComments={comments} />
         </article>
