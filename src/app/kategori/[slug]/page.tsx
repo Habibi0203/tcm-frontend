@@ -45,8 +45,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function KategoriPage({ params }: { params: { slug: string } }) {
   // Fetch categories and articles matching the slug
   const [catRes, artRes] = await Promise.all([
-    serverFetch<CategoryItem[]>("/articles/categories"),
-    serverFetch<ArticleItem[]>(`/articles?category_slug=${params.slug}&per_page=30`),
+    serverFetch<CategoryItem[]>("/articles/categories", { cache: "no-store" }),
+    serverFetch<ArticleItem[]>(`/articles?category_slug=${params.slug}&per_page=30`, { cache: "no-store" }),
   ]);
 
   const categories = catRes.success ? catRes.data : [];

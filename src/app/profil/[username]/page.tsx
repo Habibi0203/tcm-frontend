@@ -70,8 +70,8 @@ export default async function ProfilPage({ params }: { params: { username: strin
 
   // Fetch user's articles and threads
   const [articlesRes, threadsRes] = await Promise.all([
-    serverFetch<ProfileArticle[]>(`/articles?author=${user.id}&per_page=9`),
-    serverFetch<ProfileThread[]>(`/users/${params.username}/threads`),
+    serverFetch<ProfileArticle[]>(`/articles?author=${user.id}&per_page=9`, { cache: "no-store" }),
+    serverFetch<ProfileThread[]>(`/users/${params.username}/threads`, { cache: "no-store" }),
   ]);
 
   const userArticles = articlesRes.success ? articlesRes.data : [];

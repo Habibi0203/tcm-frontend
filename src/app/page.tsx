@@ -72,9 +72,9 @@ interface StatsData {
 export default async function HomePage() {
   // Fetch real data from backend (all in parallel)
   const [articlesRes, subforumsRes, statsRes] = await Promise.all([
-    serverFetch<ArticleListItem[]>("/articles?sort=newest&per_page=6"),
-    serverFetch<SubforumItem[]>("/subforums"),
-    serverFetch<StatsData>("/stats"),
+    serverFetch<ArticleListItem[]>("/articles?sort=newest&per_page=6", { cache: "no-store" }),
+    serverFetch<SubforumItem[]>("/subforums", { cache: "no-store" }),
+    serverFetch<StatsData>("/stats", { cache: "no-store" }),
   ]);
 
   const latestArticles = articlesRes.success ? articlesRes.data : [];
