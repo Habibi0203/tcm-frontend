@@ -51,36 +51,36 @@ async function getArticleBySlug(slug: string): Promise<ArticleDetail | null> {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const article = await getArticleBySlug(params.slug);
-  return article
-    ? {
-        title: `${article.title} — tcm.my.id`,
-        description: article.excerpt ?? undefined,
-        alternates: {
-          canonical: `/artikel/${article.slug}`,
-        },
-        openGraph: {
-          title:       article.title,
-          description: article.excerpt ?? undefined,
-          type:        "article",
-          url:         `https://tcm.my.id/artikel/${article.slug}`,
-          siteName:    "tcm.my.id",
-          images:      article.thumbnail_url ? [{ url: article.thumbnail_url }] : undefined,
-          publishedTime: article.published_at ?? undefined,
-          modifiedTime: article.updated_at ?? article.published_at ?? undefined,
-          authors: article.author ? [article.author.display_name] : undefined,
-          section: article.category?.name ?? undefined,
-          tags: Array.isArray(article.tags)
-            ? article.tags.map((tag) => (typeof tag === "string" ? tag : tag.name))
-            : undefined,
-        },
-        twitter: {
-          card: article.thumbnail_url ? "summary_large_image" : "summary",
-          title: article.title,
-          description: article.excerpt ?? undefined,
-          images: article.thumbnail_url ? [article.thumbnail_url] : undefined,
-        },
-      }
-    : { title: "Artikel — tcm.my.id" };
+  if (!article) notFound();
+
+  return {
+    title: `${article.title} — tcm.my.id`,
+    description: article.excerpt ?? undefined,
+    alternates: {
+      canonical: `/artikel/${article.slug}`,
+    },
+    openGraph: {
+      title:       article.title,
+      description: article.excerpt ?? undefined,
+      type:        "article",
+      url:         `https://tcm.my.id/artikel/${article.slug}`,
+      siteName:    "tcm.my.id",
+      images:      article.thumbnail_url ? [{ url: article.thumbnail_url }] : undefined,
+      publishedTime: article.published_at ?? undefined,
+      modifiedTime: article.updated_at ?? article.published_at ?? undefined,
+      authors: article.author ? [article.author.display_name] : undefined,
+      section: article.category?.name ?? undefined,
+      tags: Array.isArray(article.tags)
+        ? article.tags.map((tag) => (typeof tag === "string" ? tag : tag.name))
+        : undefined,
+    },
+    twitter: {
+      card: article.thumbnail_url ? "summary_large_image" : "summary",
+      title: article.title,
+      description: article.excerpt ?? undefined,
+      images: article.thumbnail_url ? [article.thumbnail_url] : undefined,
+    },
+  };
 }
 
 export default async function ArtikelDetailPage({ params, searchParams }: PageProps) {

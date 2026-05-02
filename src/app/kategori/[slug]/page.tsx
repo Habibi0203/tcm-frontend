@@ -31,12 +31,14 @@ interface ArticleItem {
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const res = await serverFetch<CategoryItem[]>("/articles/categories");
+  const res = await serverFetch<CategoryItem[]>("/articles/categories", { cache: "no-store" });
   const cats = res.success ? res.data : [];
   const cat = cats.find((c) => c.slug === params.slug);
+  if (!cat) notFound();
+
   return {
-    title: cat ? `Kategori: ${cat.name} — tcm.my.id` : "Kategori — tcm.my.id",
-    description: cat?.description ?? `Artikel TCM kategori ${params.slug}.`,
+    title: `Kategori: ${cat.name} — tcm.my.id`,
+    description: cat.description ?? `Artikel TCM kategori ${params.slug}.`,
   };
 }
 

@@ -53,11 +53,13 @@ interface ProfileThread {
 }
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
-  const res = await serverFetch<UserProfile>(`/users/${params.username}`);
+  const res = await serverFetch<UserProfile>(`/users/${params.username}`, { cache: "no-store" });
   const u = res.success ? res.data : null;
+  if (!u) notFound();
+
   return {
-    title: u ? `${u.display_name} (@${u.username}) — tcm.my.id` : "Profil — tcm.my.id",
-    description: u?.bio ?? `Profil anggota ${params.username} di komunitas TCM Indonesia.`,
+    title: `${u.display_name} (@${u.username}) — tcm.my.id`,
+    description: u.bio ?? `Profil anggota ${params.username} di komunitas TCM Indonesia.`,
   };
 }
 

@@ -6,11 +6,15 @@ import { serverFetch } from "@/lib/api";
 import ThreadRow from "@/components/ui/ThreadRow";
 
 export async function generateMetadata({ params }: { params: { subforum: string } }): Promise<Metadata> {
-  const res = await serverFetch<{ name: string; description: string }>(`/subforums/${params.subforum}`);
+  const res = await serverFetch<{ name: string; description: string }>(`/subforums/${params.subforum}`, {
+    cache: "no-store",
+  });
   const sf  = res.success ? res.data : null;
+  if (!sf) notFound();
+
   return {
-    title: sf ? `${sf.name} — Forum tcm.my.id` : "Forum — tcm.my.id",
-    description: sf?.description ?? "Forum diskusi TCM Indonesia.",
+    title: `${sf.name} — Forum tcm.my.id`,
+    description: sf.description ?? "Forum diskusi TCM Indonesia.",
   };
 }
 
