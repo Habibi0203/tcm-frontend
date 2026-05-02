@@ -209,7 +209,7 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
           {article.has_disclaimer && (
             <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-300/50 bg-amber-light/50 px-4 py-3 text-sm text-text-main">
               <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-tcm" />
-              <span>Artikel ini bersifat informatif. Konsultasikan dengan praktisi TCM berlisensi sebelum menerapkan saran kesehatan.</span>
+              <span>Artikel ini bersifat informatif dan bukan pengganti diagnosis atau terapi individual. Untuk keputusan kesehatan pribadi, konsultasikan dengan praktisi TCM yang kompeten atau tenaga kesehatan sesuai kebutuhan Anda.</span>
             </div>
           )}
 
