@@ -37,10 +37,14 @@ interface PageProps {
 }
 
 async function getArticleBySlug(slug: string): Promise<ArticleDetail | null> {
-  const detailRes = await serverFetch<ArticleDetail>(`/articles/${encodeURIComponent(slug)}`);
+  const detailRes = await serverFetch<ArticleDetail>(`/articles/${encodeURIComponent(slug)}`, {
+    cache: "no-store",
+  });
   if (detailRes.success) return detailRes.data;
 
-  const listRes = await serverFetch<ArticleDetail[]>(`/articles?slug=${encodeURIComponent(slug)}`);
+  const listRes = await serverFetch<ArticleDetail[]>(`/articles?slug=${encodeURIComponent(slug)}`, {
+    cache: "no-store",
+  });
   if (!listRes.success) return null;
   return listRes.data.find((item) => item.slug === slug) ?? null;
 }

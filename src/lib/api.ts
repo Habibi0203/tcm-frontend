@@ -93,21 +93,28 @@ export async function apiFetch<T>(
 /** Server-side fetch (used in async server components) — calls backend directly */
 export async function serverFetch<T>(
   path: string,
-  options: RequestInit & { token?: string } = {}
+  options: RequestInit & { token?: string; next?: { revalidate?: number | false; tags?: string[] } } = {}
 ): Promise<ApiResult<T>> {
   const backendUrl = process.env.BACKEND_URL ?? 'http://localhost:3001';
-  const { token, headers: extraHeaders, ...rest } = options;
+  const { token, headers: extraHeaders, next, ...rest } = options;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(extraHeaders as Record<string, string> ?? {}),
   };
   try {
-    const res = await fetch(`${backendUrl}/api${path}`, {
+    const fetchOptions: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {
       ...rest,
       headers,
-      next: { revalidate: 60 },
-    });
+    };
+
+    if (next) {
+      fetchOptions.next = next;
+    } else if (rest.cache !== 'no-store') {
+      fetchOptions.next = { revalidate: 60 };
+    }
+
+    const res = await fetch(`${backendUrl}/api${path}`, fetchOptions);
     const json = await res.json() as ApiResult<T>;
     return json;
   } catch (e) {
