@@ -23,6 +23,7 @@ interface ArticleDetail {
   like_count:    number;
   comment_count: number;
   published_at:  string | null;
+  updated_at?:   string | null;
   has_disclaimer?: boolean;
   tags?:         string[] | { id: string; name: string; slug: string }[];
   read_time_minutes: number | null;
@@ -50,11 +51,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ? {
         title: `${article.title} — tcm.my.id`,
         description: article.excerpt ?? undefined,
+        alternates: {
+          canonical: `/artikel/${article.slug}`,
+        },
         openGraph: {
           title:       article.title,
           description: article.excerpt ?? undefined,
           type:        "article",
+          url:         `https://tcm.my.id/artikel/${article.slug}`,
+          siteName:    "tcm.my.id",
           images:      article.thumbnail_url ? [{ url: article.thumbnail_url }] : undefined,
+          publishedTime: article.published_at ?? undefined,
+          modifiedTime: article.updated_at ?? article.published_at ?? undefined,
+          authors: article.author ? [article.author.display_name] : undefined,
+          section: article.category?.name ?? undefined,
+          tags: Array.isArray(article.tags)
+            ? article.tags.map((tag) => (typeof tag === "string" ? tag : tag.name))
+            : undefined,
+        },
+        twitter: {
+          card: article.thumbnail_url ? "summary_large_image" : "summary",
+          title: article.title,
+          description: article.excerpt ?? undefined,
+          images: article.thumbnail_url ? [article.thumbnail_url] : undefined,
         },
       }
     : { title: "Artikel — tcm.my.id" };
@@ -68,8 +87,41 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
   const comments = commentsRes.success ? commentsRes.data : [];
   const lang = searchParams.lang === "en" ? "en" : "id";
 
+  const articleUrl = `https://tcm.my.id/artikel/${article.slug}`;
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.excerpt ?? undefined,
+    image: article.thumbnail_url ? [article.thumbnail_url] : undefined,
+    datePublished: article.published_at ?? undefined,
+    dateModified: article.updated_at ?? article.published_at ?? undefined,
+    mainEntityOfPage: articleUrl,
+    articleSection: article.category?.name ?? undefined,
+    keywords: Array.isArray(article.tags)
+      ? article.tags.map((tag) => (typeof tag === "string" ? tag : tag.name)).join(", ")
+      : undefined,
+    author: article.author
+      ? {
+          "@type": "Person",
+          name: article.author.display_name,
+          url: `https://tcm.my.id/profil/${article.author.username}`,
+        }
+      : undefined,
+    publisher: {
+      "@type": "Organization",
+      name: "tcm.my.id",
+      url: "https://tcm.my.id",
+    },
+  };
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Breadcrumb */}
       <nav className="mb-6 flex items-center gap-2 text-sm text-muted">
         <Link href="/artikel" className="inline-flex items-center gap-1 hover:text-primary">
@@ -178,5 +230,6 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
         </aside>
       </div>
     </div>
+    </>
   );
 }

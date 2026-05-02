@@ -7,10 +7,15 @@ export const metadata: Metadata = {
   title: "tcm.my.id — Komunitas Traditional Chinese Medicine Indonesia",
   description:
     "Platform komunitas TCM Indonesia. Edukasi, diskusi, dan sumber daya tepercaya tentang Traditional Chinese Medicine untuk pemula hingga praktisi.",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "tcm.my.id — Komunitas TCM Indonesia",
     description: "Edukasi TCM, ruang diskusi komunitas, dan konten editorial yang disusun bertahap.",
     type: "website",
+    url: "https://tcm.my.id/",
+    siteName: "tcm.my.id",
   },
 };
 import { ArrowRight, BookOpen, Users, MessageCircle } from "lucide-react";

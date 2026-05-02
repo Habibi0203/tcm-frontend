@@ -35,6 +35,7 @@ const jetBrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://tcm.my.id"),
   title: "tcm.my.id — Komunitas Traditional Chinese Medicine Indonesia",
   description:
     "Platform komunitas TCM Indonesia. Edukasi, diskusi, dan sumber daya tepercaya tentang Traditional Chinese Medicine untuk pemula hingga praktisi.",
