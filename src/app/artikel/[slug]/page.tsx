@@ -14,7 +14,9 @@ interface ArticleDetail {
   id:            string;
   slug:          string;
   title:         string;
+  seo_title?:    string | null;
   excerpt:       string | null;
+  seo_description?: string | null;
   content?:      string;
   content_en?:   string | null;
   thumbnail_url: string | null;
@@ -62,15 +64,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const article = await getArticleBySlug(params.slug);
   if (!article) notFound();
 
+  const seoTitle = article.seo_title?.trim() || article.title;
+  const seoDescription = article.seo_description?.trim() || article.excerpt || undefined;
+
   return {
-    title: `${article.title} — tcm.my.id`,
-    description: article.excerpt ?? undefined,
+    title: `${seoTitle} — tcm.my.id`,
+    description: seoDescription,
     alternates: {
       canonical: `/artikel/${article.slug}`,
     },
     openGraph: {
-      title:       article.title,
-      description: article.excerpt ?? undefined,
+      title:       seoTitle,
+      description: seoDescription,
       type:        "article",
       url:         `https://tcm.my.id/artikel/${article.slug}`,
       siteName:    "tcm.my.id",
@@ -85,8 +90,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: article.thumbnail_url ? "summary_large_image" : "summary",
-      title: article.title,
-      description: article.excerpt ?? undefined,
+      title: seoTitle,
+      description: seoDescription,
       images: article.thumbnail_url ? [article.thumbnail_url] : undefined,
     },
   };
@@ -106,8 +111,8 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: article.title,
-    description: article.excerpt ?? undefined,
+    headline: article.seo_title?.trim() || article.title,
+    description: article.seo_description?.trim() || article.excerpt || undefined,
     image: article.thumbnail_url ? [article.thumbnail_url] : undefined,
     datePublished: article.published_at ?? undefined,
     dateModified: article.updated_at ?? article.published_at ?? undefined,
