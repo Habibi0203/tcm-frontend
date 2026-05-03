@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Clock, Lock, Eye, MessageCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { getArticleIllustrationPath } from "@/lib/article-illustration";
 import CategoryBadge from "./CategoryBadge";
 
 interface ArticleData {
@@ -27,7 +28,11 @@ interface ArticleCardProps {
 }
 
 export default function ArticleCard({ article, variant = "grid" }: ArticleCardProps) {
-  const safeThumbnail = article.thumbnail_url?.trim() || null;
+  const safeThumbnail = article.thumbnail_url?.trim() || getArticleIllustrationPath({
+    title: article.title,
+    categoryName: article.category?.name,
+    categorySlug: article.category?.slug,
+  });
 
   if (variant === "compact") {
     return (
@@ -63,6 +68,17 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
         href={`/artikel/${article.slug}`}
         className="group block rounded-xl border border-border-main bg-card p-5 transition-shadow hover:shadow-md"
       >
+        <div className="flex flex-col gap-4 md:flex-row">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-surface md:w-56 md:flex-shrink-0">
+            <Image
+              src={safeThumbnail}
+              alt={article.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 224px"
+              className="object-cover"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <CategoryBadge name={article.category.name} slug={article.category.slug} color={article.category.color_hex} asSpan />
           {article.access_tier === "premium" && (
@@ -82,6 +98,8 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
           <span className="flex items-center gap-1"><Eye size={12} />{article.view_count}</span>
           <span className="flex items-center gap-1"><MessageCircle size={12} />{article.comment_count}</span>
         </div>
+          </div>
+        </div>
       </Link>
     );
   }
@@ -89,8 +107,18 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
   return (
     <Link
       href={`/artikel/${article.slug}`}
-      className="group flex h-full flex-col rounded-xl border border-border-main bg-card p-5 transition-all hover:shadow-md"
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border-main bg-card transition-all hover:shadow-md"
     >
+      <div className="relative aspect-[16/10] w-full bg-surface">
+        <Image
+          src={safeThumbnail}
+          alt={article.title}
+          fill
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="object-cover"
+        />
+      </div>
+      <div className="flex h-full flex-col p-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <CategoryBadge name={article.category.name} slug={article.category.slug} color={article.category.color_hex} asSpan />
         {article.access_tier === "premium" && (
@@ -109,6 +137,7 @@ export default function ArticleCard({ article, variant = "grid" }: ArticleCardPr
         {article.published_at && <span className="flex items-center gap-1"><Clock size={12} /> {formatDate(article.published_at)}</span>}
         <span className="flex items-center gap-1"><Eye size={12} /> {article.view_count}</span>
         <span className="flex items-center gap-1"><MessageCircle size={12} /> {article.comment_count}</span>
+      </div>
       </div>
     </Link>
   );

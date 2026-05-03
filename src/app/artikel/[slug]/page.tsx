@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Clock, Eye, Heart, ArrowLeft, AlertTriangle } from "lucide-react";
 import { serverFetch } from "@/lib/api";
+import { getArticleIllustrationUrl } from "@/lib/article-illustration";
 import { formatDate } from "@/lib/utils";
 import CategoryBadge from "@/components/ui/CategoryBadge";
 import MemberBadge from "@/components/ui/MemberBadge";
@@ -66,6 +67,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const seoTitle = article.seo_title?.trim() || article.title;
   const seoDescription = article.seo_description?.trim() || article.excerpt || undefined;
+  const socialImage = article.thumbnail_url?.trim() || getArticleIllustrationUrl({
+    title: article.title,
+    categoryName: article.category?.name,
+    categorySlug: article.category?.slug,
+  });
 
   return {
     title: `${seoTitle} — tcm.my.id`,
@@ -79,7 +85,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type:        "article",
       url:         `https://tcm.my.id/artikel/${article.slug}`,
       siteName:    "tcm.my.id",
-      images:      article.thumbnail_url ? [{ url: article.thumbnail_url }] : undefined,
+      images:      [{ url: socialImage }],
       publishedTime: article.published_at ?? undefined,
       modifiedTime: article.updated_at ?? article.published_at ?? undefined,
       authors: article.author ? [article.author.display_name] : undefined,
@@ -89,10 +95,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         : undefined,
     },
     twitter: {
-      card: article.thumbnail_url ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: seoTitle,
       description: seoDescription,
-      images: article.thumbnail_url ? [article.thumbnail_url] : undefined,
+      images: [socialImage],
     },
   };
 }
@@ -108,12 +114,17 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
   const cleanContent = stripLegacyContentDisclaimer(article.content ?? article.excerpt ?? "") ?? "";
   const cleanContentEn = stripLegacyContentDisclaimer(article.content_en ?? null) ?? null;
   const articleUrl = `https://tcm.my.id/artikel/${article.slug}`;
+  const illustrationUrl = article.thumbnail_url?.trim() || getArticleIllustrationUrl({
+    title: article.title,
+    categoryName: article.category?.name,
+    categorySlug: article.category?.slug,
+  });
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: article.seo_title?.trim() || article.title,
     description: article.seo_description?.trim() || article.excerpt || undefined,
-    image: article.thumbnail_url ? [article.thumbnail_url] : undefined,
+    image: [illustrationUrl],
     datePublished: article.published_at ?? undefined,
     dateModified: article.updated_at ?? article.published_at ?? undefined,
     mainEntityOfPage: articleUrl,
@@ -204,11 +215,9 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
           </div>
 
           {/* Thumbnail */}
-          {article.thumbnail_url && (
-            <div className="mb-8 aspect-video overflow-hidden rounded-2xl">
-              <Image src={article.thumbnail_url} alt={article.title} width={800} height={450} className="h-full w-full object-cover" />
-            </div>
-          )}
+          <div className="mb-8 aspect-video overflow-hidden rounded-2xl bg-surface">
+            <Image src={illustrationUrl} alt={article.title} width={800} height={450} className="h-full w-full object-cover" />
+          </div>
 
           {/* Tags */}
           {(article.tags ?? []).length > 0 && (
