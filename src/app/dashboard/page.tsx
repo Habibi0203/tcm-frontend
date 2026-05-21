@@ -47,6 +47,8 @@ interface ModerationReport {
   details: string | null;
   status: "open" | "reviewed" | "dismissed" | "actioned";
   resolution_note: string | null;
+  auto_detected?: boolean;
+  safety_matches?: string[] | null;
   created_at: string;
   reviewed_at: string | null;
   reporter: { username: string | null; display_name: string | null };
@@ -110,6 +112,7 @@ function DashboardInner() {
   const [reportStatusFilter, setReportStatusFilter] = useState("open");
   const [reportReasonFilter, setReportReasonFilter] = useState("");
   const [reportTypeFilter, setReportTypeFilter] = useState("");
+  const [reportAutoFilter, setReportAutoFilter] = useState("");
   const [reportPage, setReportPage] = useState(1);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportActionId, setReportActionId] = useState<string | null>(null);
@@ -150,6 +153,7 @@ function DashboardInner() {
     if (reportStatusFilter) params.set("status", reportStatusFilter);
     if (reportReasonFilter) params.set("reason", reportReasonFilter);
     if (reportTypeFilter) params.set("target_type", reportTypeFilter);
+    if (reportAutoFilter) params.set("auto_detected", reportAutoFilter);
     const res = await apiFetch<ModerationReport[]>(`/admin/reports?${params.toString()}`, { token: access_token });
     setReportsLoading(false);
     if (res.success) {
@@ -158,7 +162,7 @@ function DashboardInner() {
       return;
     }
     setReportError(res.error.message || "Gagal memuat laporan moderasi.");
-  }, [access_token, isModerator, reportPage, reportReasonFilter, reportStatusFilter, reportTypeFilter]);
+  }, [access_token, isModerator, reportAutoFilter, reportPage, reportReasonFilter, reportStatusFilter, reportTypeFilter]);
 
   useEffect(() => {
     if (activeTab === "moderasi") fetchReports();
@@ -409,7 +413,7 @@ function DashboardInner() {
                   Refresh
                 </button>
               </div>
-              <div className="mb-5 grid gap-3 rounded-2xl border border-border-main bg-card p-4 md:grid-cols-4">
+              <div className="mb-5 grid gap-3 rounded-2xl border border-border-main bg-card p-4 md:grid-cols-5">
                 <label className="text-xs font-medium text-text-main">
                   Status
                   <select value={reportStatusFilter} onChange={(e) => { setReportStatusFilter(e.target.value); setReportPage(1); }} className="mt-1 w-full rounded-lg border border-border-main bg-white px-3 py-2 text-sm">
@@ -433,6 +437,14 @@ function DashboardInner() {
                     <option value="">Semua</option>
                     <option value="thread">Thread</option>
                     <option value="reply">Reply</option>
+                  </select>
+                </label>
+                <label className="text-xs font-medium text-text-main">
+                  Deteksi
+                  <select value={reportAutoFilter} onChange={(e) => { setReportAutoFilter(e.target.value); setReportPage(1); }} className="mt-1 w-full rounded-lg border border-border-main bg-white px-3 py-2 text-sm">
+                    <option value="">Semua</option>
+                    <option value="true">Otomatis</option>
+                    <option value="false">Manual user</option>
                   </select>
                 </label>
                 <div className="flex items-end text-xs text-muted">
@@ -618,14 +630,14 @@ function ModerationReportCard({
   onActionDone: () => void;
   onActionError: (message: string) => void;
 }) {
-  async function updateReport(status: "reviewed" | "dismissed" | "actioned", opts: { hide_content?: boolean; lock_thread?: boolean } = {}) {
+  async function updateReport(status: "reviewed" | "dismissed" | "actioned", opts: { hide_content?: boolean; lock_thread?: boolean; deletion_reason?: string } = {}) {
     onActionStart();
     const res = await apiFetch<{ message: string }>(`/admin/reports/${report.id}`, {
       method: "PATCH",
       token,
       body: {
         status,
-        resolution_note: status === "actioned" ? "Ditindak dari dashboard moderasi." : "Ditinjau dari dashboard moderasi.",
+        resolution_note: opts.deletion_reason ?? (status === "actioned" ? "Ditindak dari dashboard moderasi." : "Ditinjau dari dashboard moderasi."),
         ...opts,
       },
     });
@@ -643,6 +655,7 @@ function ModerationReportCard({
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700">{REPORT_STATUS[report.status] ?? report.status}</span>
             <span className="rounded-full bg-amber-light px-2 py-0.5 font-semibold text-amber-tcm">{REPORT_REASONS[report.reason] ?? report.reason}</span>
+            {report.auto_detected && <span className="rounded-full bg-purple-100 px-2 py-0.5 font-semibold text-purple-700">Auto-detect</span>}
             <span className="text-muted">{new Date(report.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
           </div>
           <h2 className="mt-3 font-display text-lg font-bold text-text-main">
@@ -664,6 +677,9 @@ function ModerationReportCard({
         </blockquote>
       )}
       {report.details && <p className="mt-4 text-sm text-text-main">{report.details}</p>}
+      {report.safety_matches && report.safety_matches.length > 0 && (
+        <p className="mt-2 text-xs text-purple-700">Pola terdeteksi: {report.safety_matches.join(", ")}</p>
+      )}
       <div className="mt-5 flex flex-wrap gap-2 border-t border-border-main pt-4">
         <button disabled={busy} onClick={() => updateReport("reviewed")} className="rounded-lg border border-border-main px-3 py-2 text-xs font-medium text-text-main hover:bg-surface disabled:opacity-60">
           Tandai ditinjau
@@ -674,7 +690,11 @@ function ModerationReportCard({
         <button disabled={busy} onClick={() => updateReport("actioned", { lock_thread: true })} className="rounded-lg bg-amber-tcm px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60">
           Lock thread
         </button>
-        <button disabled={busy} onClick={() => updateReport("actioned", { hide_content: true })} className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60">
+        <button disabled={busy} onClick={() => {
+          const reason = window.prompt("Alasan menyembunyikan konten:", "Melanggar pedoman komunitas / klaim medis berbahaya.");
+          if (!reason) return;
+          updateReport("actioned", { hide_content: true, deletion_reason: reason });
+        }} className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60">
           Sembunyikan konten
         </button>
       </div>

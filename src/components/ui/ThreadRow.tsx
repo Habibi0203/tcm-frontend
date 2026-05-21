@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MessageCircle, Eye, Pin, Lock } from "lucide-react";
+import { MessageCircle, Eye, Pin, Lock, Flag } from "lucide-react";
 import { formatRelativeTime } from "@/lib/utils";
 import MemberBadge from "./MemberBadge";
 
@@ -22,6 +22,7 @@ interface ThreadData {
   view_count?: number;
   is_pinned: boolean;
   is_locked: boolean;
+  is_flagged?: boolean;
   created_at: string;
   last_reply_author?: { display_name: string } | null;
 }
@@ -50,6 +51,7 @@ export default function ThreadRow({ thread }: { thread: ThreadData }) {
           <div className="flex flex-wrap items-center gap-2">
             {thread.is_pinned && <Pin size={14} className="text-primary" />}
             {thread.is_locked && <Lock size={14} className="text-muted" />}
+            {thread.is_flagged && <Flag size={14} className="text-red-600" aria-label="Ditandai moderasi" />}
             <h3 className="font-medium text-text-main group-hover:text-primary line-clamp-2">
               {thread.title}
             </h3>

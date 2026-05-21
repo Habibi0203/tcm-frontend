@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { notFound, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Eye, MessageCircle, ThumbsUp, Pin, Lock, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Eye, MessageCircle, ThumbsUp, Pin, Lock, Send, Loader2, Flag } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -39,6 +39,7 @@ interface ThreadDetail {
   content:     string;
   is_pinned:   boolean;
   is_locked:   boolean;
+  is_flagged:  boolean;
   view_count:  number;
   reply_count: number;
   created_at:  string;
@@ -154,6 +155,11 @@ export default function ThreadDetailPage() {
           {thread.is_locked && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-light px-2 py-0.5 text-xs font-semibold text-amber-tcm">
               <Lock size={10} /> Terkunci
+            </span>
+          )}
+          {thread.is_flagged && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+              <Flag size={10} /> Ditinjau moderator
             </span>
           )}
         </div>
