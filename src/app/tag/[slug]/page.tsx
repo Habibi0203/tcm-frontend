@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import { serverFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
 
+export const revalidate = 300;
+
 interface TagItem { id: string; name: string; slug: string; article_count?: number }
 interface ArticleItem {
   id: string; slug: string; title: string; excerpt: string | null; thumbnail_url: string | null;

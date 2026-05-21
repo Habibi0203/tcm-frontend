@@ -9,6 +9,8 @@ import MemberBadge from "@/components/ui/MemberBadge";
 import ThreadRow from "@/components/ui/ThreadRow";
 import ProfileArticleActions from "@/components/ui/ProfileArticleActions";
 
+export const revalidate = 180;
+
 interface UserProfile {
   id: string;
   username: string;
@@ -53,7 +55,7 @@ interface ProfileThread {
 }
 
 export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
-  const res = await serverFetch<UserProfile>(`/users/${params.username}`, { cache: "no-store" });
+  const res = await serverFetch<UserProfile>(`/users/${params.username}`, { next: { revalidate: 180 } });
   const u = res.success ? res.data : null;
   if (!u) notFound();
 
@@ -70,8 +72,8 @@ export default async function ProfilPage({ params }: { params: { username: strin
 
   // Fetch user's articles and threads
   const [articlesRes, threadsRes] = await Promise.all([
-    serverFetch<ProfileArticle[]>(`/articles?author=${user.id}&per_page=9`, { cache: "no-store" }),
-    serverFetch<ProfileThread[]>(`/users/${params.username}/threads`, { cache: "no-store" }),
+    serverFetch<ProfileArticle[]>(`/articles?author=${user.id}&per_page=9`, { next: { revalidate: 180 } }),
+    serverFetch<ProfileThread[]>(`/users/${params.username}/threads`, { next: { revalidate: 180 } }),
   ]);
 
   const userArticles = articlesRes.success ? articlesRes.data : [];

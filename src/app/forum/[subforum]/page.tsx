@@ -5,9 +5,11 @@ import { ArrowLeft, Lock, Plus, ShieldAlert } from "lucide-react";
 import { serverFetch } from "@/lib/api";
 import ThreadRow from "@/components/ui/ThreadRow";
 
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: { params: { subforum: string } }): Promise<Metadata> {
   const res = await serverFetch<{ name: string; description: string }>(`/subforums/${params.subforum}`, {
-    cache: "no-store",
+    next: { revalidate: 300 },
   });
   const sf  = res.success ? res.data : null;
   if (!sf) notFound();

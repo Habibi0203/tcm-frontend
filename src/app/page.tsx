@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "tcm.my.id — Komunitas Traditional Chinese Medicine Indonesia",
@@ -72,10 +72,10 @@ interface StatsData {
 export default async function HomePage() {
   // Fetch real data from backend (all in parallel)
   const [articlesRes, popularRes, subforumsRes, statsRes] = await Promise.all([
-    serverFetch<ArticleListItem[]>("/articles?sort=newest&per_page=6", { cache: "no-store" }),
-    serverFetch<ArticleListItem[]>("/articles?sort=popular&per_page=3", { cache: "no-store" }),
-    serverFetch<SubforumItem[]>("/subforums", { cache: "no-store" }),
-    serverFetch<StatsData>("/stats", { cache: "no-store" }),
+    serverFetch<ArticleListItem[]>("/articles?sort=newest&per_page=6", { next: { revalidate: 300 } }),
+    serverFetch<ArticleListItem[]>("/articles?sort=popular&per_page=3", { next: { revalidate: 300 } }),
+    serverFetch<SubforumItem[]>("/subforums", { next: { revalidate: 300 } }),
+    serverFetch<StatsData>("/stats", { next: { revalidate: 300 } }),
   ]);
 
   const latestArticles = articlesRes.success ? articlesRes.data : [];

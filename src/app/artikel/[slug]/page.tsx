@@ -11,6 +11,8 @@ import MemberBadge from "@/components/ui/MemberBadge";
 import ArticleContent from "./ArticleContent";
 import ArticleComments, { type ArticleCommentItem } from "./ArticleComments";
 
+export const revalidate = 300;
+
 interface ArticleDetail {
   id:            string;
   slug:          string;
@@ -50,12 +52,12 @@ function stripLegacyContentDisclaimer(text: string | null | undefined): string |
 
 async function getArticleBySlug(slug: string): Promise<ArticleDetail | null> {
   const detailRes = await serverFetch<ArticleDetail>(`/articles/${encodeURIComponent(slug)}`, {
-    cache: "no-store",
+    next: { revalidate: 300 },
   });
   if (detailRes.success) return detailRes.data;
 
   const listRes = await serverFetch<ArticleDetail[]>(`/articles?slug=${encodeURIComponent(slug)}`, {
-    cache: "no-store",
+    next: { revalidate: 300 },
   });
   if (!listRes.success) return null;
   return listRes.data.find((item) => item.slug === slug) ?? null;

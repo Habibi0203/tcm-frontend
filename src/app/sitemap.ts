@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
 
-export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 const SITE_URL = "https://tcm.my.id";

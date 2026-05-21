@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import { serverFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
 
+export const revalidate = 300;
+
 interface CategoryItem {
   id: string;
   name: string;
@@ -31,7 +33,7 @@ interface ArticleItem {
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const res = await serverFetch<CategoryItem[]>("/articles/categories", { cache: "no-store" });
+  const res = await serverFetch<CategoryItem[]>("/articles/categories", { next: { revalidate: 300 } });
   const cats = res.success ? res.data : [];
   const cat = cats.find((c) => c.slug === params.slug);
   if (!cat) notFound();
@@ -46,8 +48,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function KategoriPage({ params }: { params: { slug: string } }) {
   // Fetch categories and articles matching the slug
   const [catRes, artRes] = await Promise.all([
-    serverFetch<CategoryItem[]>("/articles/categories", { cache: "no-store" }),
-    serverFetch<ArticleItem[]>(`/articles?category_slug=${params.slug}&per_page=30`, { cache: "no-store" }),
+    serverFetch<CategoryItem[]>("/articles/categories", { next: { revalidate: 300 } }),
+    serverFetch<ArticleItem[]>(`/articles?category_slug=${params.slug}&per_page=30`, { next: { revalidate: 300 } }),
   ]);
 
   const categories = catRes.success ? catRes.data : [];
