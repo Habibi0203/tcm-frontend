@@ -18,6 +18,7 @@ import {
   Undo2,
   Redo2,
   Lock,
+  ShieldAlert,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
@@ -188,6 +189,28 @@ export default function NewThreadPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
+          {subforum.slug === "fjb" ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-light/30 p-5 text-sm text-text-main">
+              <div className="flex gap-3">
+                <ShieldAlert size={22} className="mt-0.5 shrink-0 text-amber-tcm" />
+                <div>
+                  <p className="font-semibold">Pastikan thread jual beli aman dan tidak menyesatkan.</p>
+                  <p className="mt-1 text-muted">
+                    Dilarang klaim menyembuhkan penyakit, menjual produk ilegal, menyamarkan sponsor/afiliasi,
+                    atau memakai testimoni medis berlebihan. Cantumkan informasi produk secara jujur dan patuhi aturan platform.
+                  </p>
+                  <Link href="/aturan-jual-beli" className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
+                    Baca aturan jual beli
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border-main bg-card p-4 text-sm text-muted">
+              Gunakan forum untuk edukasi dan pengalaman umum. Jangan memuat data medis pribadi sensitif atau memberi diagnosis pasti.
+              <Link href="/pedoman-komunitas" className="ml-1 font-medium text-primary hover:underline">Baca pedoman komunitas.</Link>
+            </div>
+          )}
           <div>
             <label className="mb-1 block text-sm font-medium text-text-main">
               Judul thread <span className="text-red-500">*</span>

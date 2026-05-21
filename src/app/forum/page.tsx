@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MessageCircle, Lock, ArrowRight } from "lucide-react";
+import { MessageCircle, Lock, ArrowRight, ShieldAlert } from "lucide-react";
 import { serverFetch } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -30,6 +30,24 @@ export default async function ForumPage() {
         <p className="mt-2 text-muted">Tempat bertukar pikiran, bertanya, dan berbagi pengalaman seputar TCM.</p>
       </header>
 
+      <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-light/30 p-5 text-sm text-text-main">
+        <div className="flex gap-3">
+          <ShieldAlert size={22} className="mt-0.5 shrink-0 text-amber-tcm" />
+          <div>
+            <p className="font-semibold">Sebelum berdiskusi</p>
+            <p className="mt-1 text-muted">
+              Forum ini untuk edukasi dan berbagi pengalaman, bukan diagnosis atau pengganti konsultasi medis.
+              Hindari klaim menyembuhkan, ajakan menghentikan terapi dokter, dan promosi produk tanpa dasar yang jelas.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3 text-xs font-medium text-primary">
+              <Link href="/pedoman-komunitas" className="hover:underline">Pedoman komunitas</Link>
+              <Link href="/aturan-jual-beli" className="hover:underline">Aturan jual beli</Link>
+              <Link href="/disclaimer-medis" className="hover:underline">Disclaimer medis</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {subforums.length === 0 ? (
         <div className="rounded-xl border border-border-main bg-white p-10 text-center">
           <p className="font-display text-xl font-semibold">Forum belum tersedia</p>
@@ -56,6 +74,11 @@ export default async function ForumPage() {
                 )}
               </div>
               <p className="mb-4 text-sm text-muted">{s.description}</p>
+              {s.slug === "fjb" && (
+                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-light/30 px-3 py-2 text-xs leading-relaxed text-amber-tcm">
+                  Forum jual beli diawasi ketat. Klaim menyembuhkan penyakit, produk ilegal, dan transaksi menyesatkan dilarang.
+                </div>
+              )}
               <div className="flex items-center justify-between text-xs text-muted">
                 <span>{s.thread_count} thread</span>
                 <span>Aktivitas: {s.last_activity_at ? formatRelativeTime(s.last_activity_at) : "—"}</span>

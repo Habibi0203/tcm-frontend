@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Lock, Plus } from "lucide-react";
+import { ArrowLeft, Lock, Plus, ShieldAlert } from "lucide-react";
 import { serverFetch } from "@/lib/api";
 import ThreadRow from "@/components/ui/ThreadRow";
 
@@ -74,6 +74,29 @@ export default async function SubforumPage({ params }: { params: { subforum: str
           <Plus size={16} /> Thread Baru
         </Link>
       </header>
+
+      {subforum.slug === "fjb" ? (
+        <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-light/30 p-5 text-sm text-text-main">
+          <div className="flex gap-3">
+            <ShieldAlert size={22} className="mt-0.5 shrink-0 text-amber-tcm" />
+            <div>
+              <p className="font-semibold">Aturan ketat Forum Jual Beli</p>
+              <p className="mt-1 text-muted">
+                Dilarang klaim menyembuhkan penyakit, menjual produk ilegal, memakai testimoni medis berlebihan,
+                atau mengarahkan pengguna menghentikan terapi dokter. Transaksi antar pengguna menjadi tanggung jawab masing-masing pihak.
+              </p>
+              <Link href="/aturan-jual-beli" className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
+                Baca aturan lengkap sebelum membuat thread
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="mb-6 rounded-2xl border border-border-main bg-card p-4 text-sm text-muted">
+          Diskusi bersifat edukatif. Jangan membagikan data medis pribadi sensitif atau memberi diagnosis pasti tanpa pemeriksaan profesional.
+          <Link href="/pedoman-komunitas" className="ml-1 font-medium text-primary hover:underline">Baca pedoman komunitas.</Link>
+        </section>
+      )}
 
       {threads.length > 0 ? (
         <div className="space-y-3">
