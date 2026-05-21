@@ -39,6 +39,25 @@ export const metadata: Metadata = {
   title: "tcm.my.id — Komunitas Traditional Chinese Medicine Indonesia",
   description:
     "Platform komunitas TCM Indonesia. Edukasi, diskusi, dan sumber daya tepercaya tentang Traditional Chinese Medicine untuk pemula hingga praktisi.",
+  openGraph: {
+    title: "tcm.my.id — Komunitas TCM Indonesia",
+    description:
+      "Edukasi TCM, ruang diskusi komunitas, dan konten editorial yang disusun bertahap.",
+    url: "https://tcm.my.id/",
+    siteName: "tcm.my.id",
+    type: "website",
+    images: [{ url: "/api/article-illustration?title=Komunitas%20TCM%20Indonesia&category=TCM&color=%234A6741" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "tcm.my.id — Komunitas TCM Indonesia",
+    description:
+      "Edukasi TCM, ruang diskusi komunitas, dan konten editorial yang disusun bertahap.",
+    images: ["/api/article-illustration?title=Komunitas%20TCM%20Indonesia&category=TCM&color=%234A6741"],
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

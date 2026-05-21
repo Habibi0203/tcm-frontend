@@ -42,6 +42,7 @@ export default function Footer() {
               <li><Link href="/tentang" className="hover:text-sand transition-colors">Tentang Kami</Link></li>
               <li><Link href="/kebijakan-privasi" className="hover:text-sand transition-colors">Kebijakan Privasi</Link></li>
               <li><Link href="/syarat-ketentuan" className="hover:text-sand transition-colors">Syarat &amp; Ketentuan</Link></li>
+              <li><Link href="/disclaimer-medis" className="hover:text-sand transition-colors">Disclaimer Medis</Link></li>
             </ul>
           </div>
         </div>

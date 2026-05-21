@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 const SITE_URL = "https://tcm.my.id";
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
-const PAGE_SIZE = 100;
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+const PAGE_SIZE = 50;
 
 type ArticleListItem = {
   slug: string;
@@ -63,10 +64,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    {
+      url: `${SITE_URL}/kebijakan-privasi`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
+    {
+      url: `${SITE_URL}/syarat-ketentuan`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
+    {
+      url: `${SITE_URL}/disclaimer-medis`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
   ];
 
   const firstPage = await fetchArticlePage(1);
-  if (!firstPage?.success) return urls;
+  if (!firstPage?.success) {
+    console.error("[sitemap] article sitemap fallback: first article page unavailable");
+    return urls;
+  }
 
   const allItems = [...firstPage.data];
   const totalPages = Math.max(1, firstPage.meta?.total_pages ?? 1);
