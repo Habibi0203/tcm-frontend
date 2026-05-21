@@ -106,6 +106,11 @@ function DashboardInner() {
   const [bookmarks, setBookmarks]       = useState<BookmarkedArticle[]>([]);
   const [notifications, setNotifications] = useState<NotifItem[]>([]);
   const [reports, setReports]           = useState<ModerationReport[]>([]);
+  const [reportsMeta, setReportsMeta]   = useState<{ page: number; per_page: number; total: number; total_pages: number } | null>(null);
+  const [reportStatusFilter, setReportStatusFilter] = useState("open");
+  const [reportReasonFilter, setReportReasonFilter] = useState("");
+  const [reportTypeFilter, setReportTypeFilter] = useState("");
+  const [reportPage, setReportPage] = useState(1);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportActionId, setReportActionId] = useState<string | null>(null);
   const [reportError, setReportError]   = useState("");
@@ -141,14 +146,19 @@ function DashboardInner() {
     if (!access_token || !isModerator) return;
     setReportsLoading(true);
     setReportError("");
-    const res = await apiFetch<ModerationReport[]>("/admin/reports?status=open&per_page=20", { token: access_token });
+    const params = new URLSearchParams({ page: String(reportPage), per_page: "10" });
+    if (reportStatusFilter) params.set("status", reportStatusFilter);
+    if (reportReasonFilter) params.set("reason", reportReasonFilter);
+    if (reportTypeFilter) params.set("target_type", reportTypeFilter);
+    const res = await apiFetch<ModerationReport[]>(`/admin/reports?${params.toString()}`, { token: access_token });
     setReportsLoading(false);
     if (res.success) {
       setReports(res.data);
+      setReportsMeta(res.meta ?? null);
       return;
     }
     setReportError(res.error.message || "Gagal memuat laporan moderasi.");
-  }, [access_token, isModerator]);
+  }, [access_token, isModerator, reportPage, reportReasonFilter, reportStatusFilter, reportTypeFilter]);
 
   useEffect(() => {
     if (activeTab === "moderasi") fetchReports();
@@ -207,8 +217,18 @@ function DashboardInner() {
     setPassError("");
     setPassSaved(false);
 
-    if (newPassword.length < 8) {
-      setPassError("Password baru minimal 8 karakter.");
+    if (newPassword.length < 10) {
+      setPassError("Password baru minimal 10 karakter.");
+      return;
+    }
+
+    if (newPassword.length > 128) {
+      setPassError("Password baru maksimal 128 karakter.");
+      return;
+    }
+
+    if (!/[a-z]/.test(newPassword) || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setPassError("Password baru harus mengandung huruf kecil, huruf besar, dan angka.");
       return;
     }
 
@@ -378,7 +398,7 @@ function DashboardInner() {
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h1 className="font-display text-2xl font-bold">Laporan Moderasi</h1>
-                  <p className="mt-1 text-sm text-muted">Antrian laporan forum yang masih terbuka.</p>
+                  <p className="mt-1 text-sm text-muted">Antrian laporan forum berdasarkan filter yang dipilih.</p>
                 </div>
                 <button
                   onClick={fetchReports}
@@ -389,6 +409,36 @@ function DashboardInner() {
                   Refresh
                 </button>
               </div>
+              <div className="mb-5 grid gap-3 rounded-2xl border border-border-main bg-card p-4 md:grid-cols-4">
+                <label className="text-xs font-medium text-text-main">
+                  Status
+                  <select value={reportStatusFilter} onChange={(e) => { setReportStatusFilter(e.target.value); setReportPage(1); }} className="mt-1 w-full rounded-lg border border-border-main bg-white px-3 py-2 text-sm">
+                    <option value="">Semua</option>
+                    <option value="open">Terbuka</option>
+                    <option value="reviewed">Ditinjau</option>
+                    <option value="dismissed">Diabaikan</option>
+                    <option value="actioned">Ditindak</option>
+                  </select>
+                </label>
+                <label className="text-xs font-medium text-text-main">
+                  Alasan
+                  <select value={reportReasonFilter} onChange={(e) => { setReportReasonFilter(e.target.value); setReportPage(1); }} className="mt-1 w-full rounded-lg border border-border-main bg-white px-3 py-2 text-sm">
+                    <option value="">Semua</option>
+                    {Object.entries(REPORT_REASONS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </label>
+                <label className="text-xs font-medium text-text-main">
+                  Tipe Konten
+                  <select value={reportTypeFilter} onChange={(e) => { setReportTypeFilter(e.target.value); setReportPage(1); }} className="mt-1 w-full rounded-lg border border-border-main bg-white px-3 py-2 text-sm">
+                    <option value="">Semua</option>
+                    <option value="thread">Thread</option>
+                    <option value="reply">Reply</option>
+                  </select>
+                </label>
+                <div className="flex items-end text-xs text-muted">
+                  {reportsMeta ? `${reportsMeta.total} laporan · halaman ${reportsMeta.page}/${reportsMeta.total_pages}` : "Memuat metadata…"}
+                </div>
+              </div>
               {reportError && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{reportError}</p>}
               {reportsLoading && reports.length === 0 ? (
                 <p className="text-sm text-muted">Memuat laporan…</p>
@@ -397,19 +447,32 @@ function DashboardInner() {
                   Tidak ada laporan terbuka.
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {reports.map((report) => (
-                    <ModerationReportCard
-                      key={report.id}
-                      report={report}
-                      busy={reportActionId === report.id}
-                      token={access_token ?? ""}
-                      onActionStart={() => setReportActionId(report.id)}
-                      onActionDone={() => { setReportActionId(null); fetchReports(); }}
-                      onActionError={(msg) => { setReportActionId(null); setReportError(msg); }}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="space-y-4">
+                    {reports.map((report) => (
+                      <ModerationReportCard
+                        key={report.id}
+                        report={report}
+                        busy={reportActionId === report.id}
+                        token={access_token ?? ""}
+                        onActionStart={() => setReportActionId(report.id)}
+                        onActionDone={() => { setReportActionId(null); fetchReports(); }}
+                        onActionError={(msg) => { setReportActionId(null); setReportError(msg); }}
+                      />
+                    ))}
+                  </div>
+                {reportsMeta && reportsMeta.total_pages > 1 && (
+                  <div className="mt-5 flex items-center justify-between rounded-xl border border-border-main bg-card px-4 py-3 text-sm">
+                    <button disabled={reportsMeta.page <= 1 || reportsLoading} onClick={() => setReportPage((p) => Math.max(1, p - 1))} className="rounded-lg border border-border-main px-3 py-1.5 disabled:opacity-50">
+                      Sebelumnya
+                    </button>
+                    <span className="text-muted">Halaman {reportsMeta.page} dari {reportsMeta.total_pages}</span>
+                    <button disabled={reportsMeta.page >= reportsMeta.total_pages || reportsLoading} onClick={() => setReportPage((p) => p + 1)} className="rounded-lg border border-border-main px-3 py-1.5 disabled:opacity-50">
+                      Berikutnya
+                    </button>
+                  </div>
+                )}
+                </>
               )}
             </>
           )}
@@ -498,7 +561,8 @@ function DashboardInner() {
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      minLength={8}
+                      minLength={10}
+                      maxLength={128}
                       required
                       className="w-full rounded-xl border border-border-main bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
                     />
@@ -509,7 +573,8 @@ function DashboardInner() {
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      minLength={8}
+                      minLength={10}
+                      maxLength={128}
                       required
                       className="w-full rounded-xl border border-border-main bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
                     />
@@ -525,7 +590,7 @@ function DashboardInner() {
                     {passError && <p className="text-sm text-red-400">{passError}</p>}
                   </div>
                   <p className="text-xs text-muted">
-                    Gunakan minimal 8 karakter. Setelah berhasil diubah, login berikutnya gunakan password baru.
+                    Gunakan 10-128 karakter dengan huruf kecil, huruf besar, dan angka. Setelah berhasil diubah, login berikutnya gunakan password baru.
                   </p>
                 </form>
               </div>

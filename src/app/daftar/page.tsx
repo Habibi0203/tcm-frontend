@@ -35,10 +35,12 @@ function validate(form: Form): Partial<Record<keyof Form, string>> {
     errs.display_name = "Nama harus 2-50 karakter";
 
   if (!form.password) errs.password = "Password wajib diisi";
-  else if (form.password.length < 8)
-    errs.password = "Password minimal 8 karakter";
-  else if (!/[a-zA-Z]/.test(form.password) || !/[0-9]/.test(form.password))
-    errs.password = "Password harus mengandung huruf dan angka";
+  else if (form.password.length < 10)
+    errs.password = "Password minimal 10 karakter";
+  else if (form.password.length > 128)
+    errs.password = "Password maksimal 128 karakter";
+  else if (!/[a-z]/.test(form.password) || !/[A-Z]/.test(form.password) || !/[0-9]/.test(form.password))
+    errs.password = "Password harus mengandung huruf kecil, huruf besar, dan angka";
 
   if (form.confirm_password !== form.password)
     errs.confirm_password = "Konfirmasi password tidak cocok";
@@ -185,7 +187,7 @@ export default function DaftarPage() {
               <input type="password" value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="w-full rounded-lg border border-border-main bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Min 8 karakter, huruf + angka" />
+                placeholder="Min 10 karakter, huruf besar/kecil + angka" />
             </div>
             {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
           </div>

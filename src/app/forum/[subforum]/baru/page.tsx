@@ -42,6 +42,7 @@ export default function NewThreadPage() {
 
   const [subforum, setSubforum] = useState<SubforumDetail | null>(null);
   const [title, setTitle] = useState("");
+  const [fjbRulesAccepted, setFjbRulesAccepted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -113,6 +114,11 @@ export default function NewThreadPage() {
       return;
     }
 
+    if (subforum?.slug === "fjb" && !fjbRulesAccepted) {
+      toast("Centang persetujuan aturan jual beli terlebih dahulu.", "error");
+      return;
+    }
+
     setSubmitting(true);
     const res = await apiFetch<{ id: string; title: string; created_at: string }>(`/subforums/${params.subforum}/threads`, {
       method: "POST",
@@ -120,6 +126,7 @@ export default function NewThreadPage() {
       body: {
         title: title.trim(),
         content: html,
+        fjb_rules_accepted: subforum?.slug === "fjb" ? fjbRulesAccepted : undefined,
       },
     });
     setSubmitting(false);
@@ -202,6 +209,18 @@ export default function NewThreadPage() {
                   <Link href="/aturan-jual-beli" className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
                     Baca aturan jual beli
                   </Link>
+                  <label className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-white/60 p-3 text-xs leading-relaxed text-text-main">
+                    <input
+                      type="checkbox"
+                      checked={fjbRulesAccepted}
+                      onChange={(e) => setFjbRulesAccepted(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-border-main text-primary focus:ring-primary"
+                    />
+                    <span>
+                      Saya sudah membaca dan menyetujui Aturan Jual Beli, termasuk larangan klaim menyembuhkan penyakit,
+                      produk ilegal, dan promosi menyesatkan.
+                    </span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -297,7 +316,7 @@ export default function NewThreadPage() {
           <div className="flex items-center gap-4">
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || (subforum.slug === "fjb" && !fjbRulesAccepted)}
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
