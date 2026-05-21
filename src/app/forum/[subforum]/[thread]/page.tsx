@@ -11,6 +11,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { formatDate } from "@/lib/utils";
 import MemberBadge from "@/components/ui/MemberBadge";
 import ReplyItem from "@/components/ui/ReplyItem";
+import ReportButton from "@/components/ui/ReportButton";
 import { useAuthStore } from "@/store/authStore";
 import { useToast } from "@/components/ui/Toast";
 import { apiFetch } from "@/lib/api";
@@ -187,6 +188,7 @@ export default function ThreadDetailPage() {
             className={`flex items-center gap-1 transition-colors ${upvoted ? "text-primary" : "hover:text-primary"}`}>
             <ThumbsUp size={14} /> {upvoted ? "Disukai" : "Suka"}
           </button>
+          <ReportButton targetType="thread" targetId={thread.id} compact />
         </div>
       </div>
 

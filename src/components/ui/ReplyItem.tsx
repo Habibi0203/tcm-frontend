@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { ThumbsUp, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import MemberBadge from "./MemberBadge";
+import ReportButton from "./ReportButton";
 
 interface ThreadReply {
   id: string;
@@ -102,6 +103,7 @@ export default function ReplyItem({ reply, isNested = false, onUpvote, onReply }
                 Balas
               </button>
             )}
+            <ReportButton targetType="reply" targetId={reply.id} compact />
             {hasChildren && (
               <button
                 onClick={() => setShowChildren((v) => !v)}

@@ -4,13 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback, Suspense } from "react";
-import { BookOpen, Bell, Settings, Check, ExternalLink, KeyRound } from "lucide-react";
+import { BookOpen, Bell, Settings, Check, ExternalLink, KeyRound, ShieldAlert, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { apiFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
 import MemberBadge from "@/components/ui/MemberBadge";
 
-type Tab = "ringkasan" | "bookmark" | "notifikasi" | "profil";
+type Tab = "ringkasan" | "bookmark" | "notifikasi" | "moderasi" | "profil";
 
 interface BookmarkedArticle {
   id: string;
@@ -38,23 +38,77 @@ interface NotifItem {
   created_at: string;
 }
 
-const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
+interface ModerationReport {
+  id: string;
+  reporter_id: string;
+  target_type: "thread" | "reply";
+  target_id: string;
+  reason: string;
+  details: string | null;
+  status: "open" | "reviewed" | "dismissed" | "actioned";
+  resolution_note: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  reporter: { username: string | null; display_name: string | null };
+  reviewer: { username: string } | null;
+  target: {
+    type: "thread" | "reply";
+    id: string;
+    thread_id: string | null;
+    thread_title: string | null;
+    subforum_slug: string | null;
+    reply_excerpt: string | null;
+    url: string | null;
+  };
+}
+
+const BASE_TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "ringkasan",  label: "Ringkasan",  icon: <BookOpen size={16} /> },
   { key: "bookmark",   label: "Bookmark",   icon: <BookOpen size={16} /> },
   { key: "notifikasi", label: "Notifikasi", icon: <Bell size={16} /> },
   { key: "profil",     label: "Profil",     icon: <Settings size={16} /> },
 ];
 
+const MODERATION_TAB: { key: Tab; label: string; icon: React.ReactNode } = {
+  key: "moderasi",
+  label: "Moderasi",
+  icon: <ShieldAlert size={16} />,
+};
+
+const REPORT_REASONS: Record<string, string> = {
+  medical_claim: "Klaim medis berbahaya",
+  illegal_product: "Produk ilegal/tidak aman",
+  fraud: "Penipuan/transaksi",
+  spam: "Spam/promosi",
+  harassment: "Pelecehan",
+  privacy: "Data pribadi/medis",
+  other: "Lainnya",
+};
+
+const REPORT_STATUS: Record<string, string> = {
+  open: "Terbuka",
+  reviewed: "Ditinjau",
+  dismissed: "Diabaikan",
+  actioned: "Ditindak",
+};
+
 function DashboardInner() {
   const router        = useRouter();
   const searchParams  = useSearchParams();
   const { user, isAuthenticated, access_token, _hasHydrated, updateUser } = useAuthStore();
 
+  const tabs = user && ["admin", "moderator"].includes(user.role)
+    ? [...BASE_TABS.slice(0, 3), MODERATION_TAB, BASE_TABS[3]]
+    : BASE_TABS;
   const rawTab = searchParams.get("tab") as Tab | null;
-  const activeTab: Tab = TABS.some((t) => t.key === rawTab) ? rawTab! : "ringkasan";
+  const activeTab: Tab = tabs.some((t) => t.key === rawTab) ? rawTab! : "ringkasan";
 
   const [bookmarks, setBookmarks]       = useState<BookmarkedArticle[]>([]);
   const [notifications, setNotifications] = useState<NotifItem[]>([]);
+  const [reports, setReports]           = useState<ModerationReport[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportActionId, setReportActionId] = useState<string | null>(null);
+  const [reportError, setReportError]   = useState("");
   const [loading, setLoading]           = useState(true);
 
   useEffect(() => {
@@ -80,6 +134,25 @@ function DashboardInner() {
       fetchDashboardData();
     }
   }, [isAuthenticated, access_token, fetchDashboardData]);
+
+  const isModerator = Boolean(user && ["admin", "moderator"].includes(user.role));
+
+  const fetchReports = useCallback(async () => {
+    if (!access_token || !isModerator) return;
+    setReportsLoading(true);
+    setReportError("");
+    const res = await apiFetch<ModerationReport[]>("/admin/reports?status=open&per_page=20", { token: access_token });
+    setReportsLoading(false);
+    if (res.success) {
+      setReports(res.data);
+      return;
+    }
+    setReportError(res.error.message || "Gagal memuat laporan moderasi.");
+  }, [access_token, isModerator]);
+
+  useEffect(() => {
+    if (activeTab === "moderasi") fetchReports();
+  }, [activeTab, fetchReports]);
 
   // Profile form state
   const [displayName, setDisplayName] = useState(user?.display_name ?? "");
@@ -202,7 +275,7 @@ function DashboardInner() {
 
           {/* Tab nav */}
           <nav className="mt-4 space-y-1 rounded-2xl border border-border-main bg-card p-2">
-            {TABS.map((t) => (
+            {tabs.map((t) => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
@@ -296,6 +369,48 @@ function DashboardInner() {
                   ))
                 )}
               </div>
+            </>
+          )}
+
+          {/* ── Moderasi ── */}
+          {activeTab === "moderasi" && isModerator && (
+            <>
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h1 className="font-display text-2xl font-bold">Laporan Moderasi</h1>
+                  <p className="mt-1 text-sm text-muted">Antrian laporan forum yang masih terbuka.</p>
+                </div>
+                <button
+                  onClick={fetchReports}
+                  disabled={reportsLoading}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border-main px-4 py-2 text-sm font-medium text-text-main hover:bg-surface disabled:opacity-60"
+                >
+                  {reportsLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                  Refresh
+                </button>
+              </div>
+              {reportError && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{reportError}</p>}
+              {reportsLoading && reports.length === 0 ? (
+                <p className="text-sm text-muted">Memuat laporan…</p>
+              ) : reports.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border-main bg-surface p-10 text-center text-muted">
+                  Tidak ada laporan terbuka.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reports.map((report) => (
+                    <ModerationReportCard
+                      key={report.id}
+                      report={report}
+                      busy={reportActionId === report.id}
+                      token={access_token ?? ""}
+                      onActionStart={() => setReportActionId(report.id)}
+                      onActionDone={() => { setReportActionId(null); fetchReports(); }}
+                      onActionError={(msg) => { setReportActionId(null); setReportError(msg); }}
+                    />
+                  ))}
+                </div>
+              )}
             </>
           )}
 
@@ -419,6 +534,86 @@ function DashboardInner() {
         </section>
       </div>
     </div>
+  );
+}
+
+
+function ModerationReportCard({
+  report,
+  busy,
+  token,
+  onActionStart,
+  onActionDone,
+  onActionError,
+}: {
+  report: ModerationReport;
+  busy: boolean;
+  token: string;
+  onActionStart: () => void;
+  onActionDone: () => void;
+  onActionError: (message: string) => void;
+}) {
+  async function updateReport(status: "reviewed" | "dismissed" | "actioned", opts: { hide_content?: boolean; lock_thread?: boolean } = {}) {
+    onActionStart();
+    const res = await apiFetch<{ message: string }>(`/admin/reports/${report.id}`, {
+      method: "PATCH",
+      token,
+      body: {
+        status,
+        resolution_note: status === "actioned" ? "Ditindak dari dashboard moderasi." : "Ditinjau dari dashboard moderasi.",
+        ...opts,
+      },
+    });
+    if (res.success) {
+      onActionDone();
+      return;
+    }
+    onActionError(res.error.message || "Gagal memperbarui laporan.");
+  }
+
+  return (
+    <article className="rounded-2xl border border-border-main bg-card p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700">{REPORT_STATUS[report.status] ?? report.status}</span>
+            <span className="rounded-full bg-amber-light px-2 py-0.5 font-semibold text-amber-tcm">{REPORT_REASONS[report.reason] ?? report.reason}</span>
+            <span className="text-muted">{new Date(report.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+          </div>
+          <h2 className="mt-3 font-display text-lg font-bold text-text-main">
+            {report.target.thread_title || `${report.target.type} ${report.target.id}`}
+          </h2>
+          <p className="mt-1 text-xs text-muted">
+            Dilaporkan oleh @{report.reporter.username ?? "unknown"} · Target: {report.target.type}
+          </p>
+        </div>
+        {report.target.url && (
+          <Link href={report.target.url} className="inline-flex items-center gap-1 rounded-lg border border-border-main px-3 py-1.5 text-xs font-medium text-primary hover:bg-surface">
+            Buka konten <ExternalLink size={13} />
+          </Link>
+        )}
+      </div>
+      {report.target.reply_excerpt && (
+        <blockquote className="mt-4 rounded-lg border-l-4 border-border-main bg-surface px-4 py-3 text-sm text-muted">
+          {report.target.reply_excerpt}
+        </blockquote>
+      )}
+      {report.details && <p className="mt-4 text-sm text-text-main">{report.details}</p>}
+      <div className="mt-5 flex flex-wrap gap-2 border-t border-border-main pt-4">
+        <button disabled={busy} onClick={() => updateReport("reviewed")} className="rounded-lg border border-border-main px-3 py-2 text-xs font-medium text-text-main hover:bg-surface disabled:opacity-60">
+          Tandai ditinjau
+        </button>
+        <button disabled={busy} onClick={() => updateReport("dismissed")} className="rounded-lg border border-border-main px-3 py-2 text-xs font-medium text-muted hover:bg-surface disabled:opacity-60">
+          Abaikan
+        </button>
+        <button disabled={busy} onClick={() => updateReport("actioned", { lock_thread: true })} className="rounded-lg bg-amber-tcm px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60">
+          Lock thread
+        </button>
+        <button disabled={busy} onClick={() => updateReport("actioned", { hide_content: true })} className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60">
+          Sembunyikan konten
+        </button>
+      </div>
+    </article>
   );
 }
 
