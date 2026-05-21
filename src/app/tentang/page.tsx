@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Tentang Kami — tcm.my.id",
   description:
     "Pelajari misi, tim, dan pendekatan editorial tcm.my.id.",
+  alternates: { canonical: "/tentang" },
 };
 
 const TEAM = [

@@ -71,13 +71,15 @@ interface StatsData {
 
 export default async function HomePage() {
   // Fetch real data from backend (all in parallel)
-  const [articlesRes, subforumsRes, statsRes] = await Promise.all([
+  const [articlesRes, popularRes, subforumsRes, statsRes] = await Promise.all([
     serverFetch<ArticleListItem[]>("/articles?sort=newest&per_page=6", { cache: "no-store" }),
+    serverFetch<ArticleListItem[]>("/articles?sort=popular&per_page=3", { cache: "no-store" }),
     serverFetch<SubforumItem[]>("/subforums", { cache: "no-store" }),
     serverFetch<StatsData>("/stats", { cache: "no-store" }),
   ]);
 
   const latestArticles = articlesRes.success ? articlesRes.data : [];
+  const popularArticles = popularRes.success ? popularRes.data : [];
   const totalArticles = articlesRes.success ? (articlesRes.meta?.total ?? articlesRes.data.length) : 0;
   const subforums = subforumsRes.success ? subforumsRes.data : [];
   const stats: StatsData = statsRes.success
@@ -155,6 +157,26 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      {/* Popular Articles */}
+      {popularArticles.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <h2 className="font-display text-3xl font-bold text-text-main">Artikel Populer</h2>
+              <p className="mt-1 text-muted">Bacaan dengan engagement tertinggi di komunitas</p>
+            </div>
+            <Link href="/artikel" className="hidden items-center gap-1 text-sm font-medium text-primary hover:text-primary-dark sm:inline-flex">
+              Jelajahi Artikel <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {popularArticles.map((a) => (
+              <ArticleCard key={a.id} article={a as Parameters<typeof ArticleCard>[0]["article"]} variant="compact" />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Subforums preview */}
       {subforums.length > 0 && (

@@ -11,6 +11,7 @@ type ArticleListItem = {
   slug: string;
   published_at?: string | null;
   category?: { slug?: string | null } | null;
+  tags?: Array<string | { slug?: string | null }> | null;
 };
 
 type ArticleListResponse = {
@@ -94,6 +95,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly",
       priority: 0.4,
     },
+    {
+      url: `${SITE_URL}/standar-editorial`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
   ];
 
   const firstPage = await fetchArticlePage(1);
@@ -112,6 +119,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const seenCategories = new Set<string>();
+  const seenTags = new Set<string>();
 
   for (const article of allItems) {
     urls.push({
@@ -120,6 +128,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.8,
     });
+
+    for (const tag of article.tags ?? []) {
+      const tagSlug = typeof tag === "string" ? tag : tag.slug;
+      if (tagSlug && !seenTags.has(tagSlug)) {
+        seenTags.add(tagSlug);
+        urls.push({
+          url: `${SITE_URL}/tag/${tagSlug}`,
+          lastModified: article.published_at ? new Date(article.published_at) : new Date(),
+          changeFrequency: "weekly",
+          priority: 0.5,
+        });
+      }
+    }
 
     const categorySlug = article.category?.slug;
     if (categorySlug && !seenCategories.has(categorySlug)) {

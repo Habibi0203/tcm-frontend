@@ -15,6 +15,7 @@ export async function generateMetadata({ params }: { params: { subforum: string 
   return {
     title: `${sf.name} — Forum tcm.my.id`,
     description: sf.description ?? "Forum diskusi TCM Indonesia.",
+    alternates: { canonical: `/forum/${params.subforum}` },
   };
 }
 

@@ -17,12 +17,15 @@ interface ThreadData {
     role: string;
     membership_tier?: string;
     is_verified?: boolean;
+    practitioner_verified?: boolean;
   } | null;
   reply_count: number;
   view_count?: number;
   is_pinned: boolean;
   is_locked: boolean;
   is_flagged?: boolean;
+  moderation_status?: "published" | "pending" | "hidden" | "deleted";
+  status?: string;
   created_at: string;
   last_reply_author?: { display_name: string } | null;
 }
@@ -52,6 +55,9 @@ export default function ThreadRow({ thread }: { thread: ThreadData }) {
             {thread.is_pinned && <Pin size={14} className="text-primary" />}
             {thread.is_locked && <Lock size={14} className="text-muted" />}
             {thread.is_flagged && <Flag size={14} className="text-red-600" aria-label="Ditandai moderasi" />}
+            {(thread.moderation_status === "hidden" || thread.moderation_status === "deleted" || thread.status === "hidden" || thread.status === "deleted") && (
+              <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700">Disembunyikan</span>
+            )}
             <h3 className="font-medium text-text-main group-hover:text-primary line-clamp-2">
               {thread.title}
             </h3>
@@ -62,7 +68,7 @@ export default function ThreadRow({ thread }: { thread: ThreadData }) {
               <MemberBadge
                 tier={thread.author.membership_tier as "free" | "premium" | undefined}
                 role={thread.author.role}
-                isVerified={thread.author.is_verified}
+                isVerified={thread.author.practitioner_verified ?? thread.author.is_verified}
               />
             )}
             <span>•</span>

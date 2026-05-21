@@ -7,6 +7,7 @@ import { formatRelativeTime } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Forum Diskusi — tcm.my.id",
   description: "Diskusi TCM bersama komunitas.",
+  alternates: { canonical: "/forum" },
 };
 
 interface Subforum {

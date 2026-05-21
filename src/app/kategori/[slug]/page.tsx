@@ -39,6 +39,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   return {
     title: `Kategori: ${cat.name} — tcm.my.id`,
     description: cat.description ?? `Artikel TCM kategori ${params.slug}.`,
+    alternates: { canonical: `/kategori/${params.slug}` },
   };
 }
 

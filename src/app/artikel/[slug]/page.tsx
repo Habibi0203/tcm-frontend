@@ -31,7 +31,7 @@ interface ArticleDetail {
   tags?:         string[] | { id: string; name: string; slug: string }[];
   read_time_minutes: number | null;
   category: { id?: string; name: string; slug: string; color_hex: string | null } | null;
-  author:   { id: string; username: string; display_name: string; avatar_url: string | null; role: string; bio?: string | null } | null;
+  author:   { id: string; username: string; display_name: string; avatar_url: string | null; role: string; bio?: string | null; profession?: string | null; is_verified?: boolean; practitioner_verified?: boolean } | null;
 }
 
 interface PageProps {
@@ -202,7 +202,7 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
                 <Link href={`/profil/${article.author.username}`} className="font-medium hover:text-primary">
                   {article.author.display_name}
                 </Link>
-                <MemberBadge role={article.author.role as "member" | "moderator" | "admin" | "superadmin"} />
+                <MemberBadge role={article.author.role as "member" | "moderator" | "admin" | "superadmin"} isVerified={article.author.practitioner_verified ?? article.author.is_verified} />
               </div>
             )}
             {article.published_at && (
@@ -226,9 +226,9 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
                 const tagName = typeof tag === "string" ? tag : tag.name;
                 const tagKey = typeof tag === "string" ? tag : tag.id;
                 return (
-                  <span key={tagKey} className="rounded-full border border-border-main bg-surface px-3 py-1 text-xs text-muted">
+                  <Link key={tagKey} href={`/tag/${typeof tag === "string" ? tag : tag.slug}`} className="rounded-full border border-border-main bg-surface px-3 py-1 text-xs text-muted hover:border-primary hover:text-primary">
                     #{tagName}
-                  </span>
+                  </Link>
                 );
               })}
             </div>
