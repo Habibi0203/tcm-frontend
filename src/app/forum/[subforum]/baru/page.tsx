@@ -41,7 +41,7 @@ export default function NewThreadPage() {
   const { user, isAuthenticated, access_token, _hasHydrated } = useAuthStore();
 
   const [subforum, setSubforum] = useState<SubforumDetail | null>(null);
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(() => params.subforum === "diskusi-umum" ? "Perkenalan: " : "");
   const [fjbRulesAccepted, setFjbRulesAccepted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -176,6 +176,17 @@ export default function NewThreadPage() {
           Mulai diskusi baru di <span className="font-medium text-text-main">{subforum.name}</span>.
           Tulis judul yang jelas dan jelaskan konteks seperlunya supaya anggota lain mudah membantu.
         </p>
+        {params.subforum === "diskusi-umum" && (
+          <div className="mt-4 rounded-2xl border border-primary/20 bg-primary-light/35 p-4 text-sm text-text-main">
+            <p className="font-semibold">Template perkenalan singkat</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
+              <li>Nama panggilan dan kota/domisi opsional.</li>
+              <li>Latar minat: pemula, mahasiswa, praktisi, atau sekadar ingin belajar.</li>
+              <li>Topik TCM yang ingin dipelajari lebih dulu.</li>
+              <li>Hindari membagikan data medis pribadi sensitif.</li>
+            </ul>
+          </div>
+        )}
       </header>
 
       {!isAuthenticated ? (
@@ -238,7 +249,7 @@ export default function NewThreadPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Contoh: Pengalaman awal belajar teori Yin-Yang"
+              placeholder={params.subforum === "diskusi-umum" ? "Contoh: Perkenalan: Budi, baru belajar TCM" : "Contoh: Pengalaman awal belajar teori Yin-Yang"}
               maxLength={200}
               required
               className="w-full rounded-xl border border-border-main bg-white px-4 py-3 font-display text-lg font-semibold placeholder:font-normal placeholder:text-muted focus:border-primary focus:outline-none"

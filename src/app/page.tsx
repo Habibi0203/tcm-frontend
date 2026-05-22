@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   },
 };
 import { ArrowRight, BookOpen, Users, MessageCircle } from "lucide-react";
+import ThreadRow from "@/components/ui/ThreadRow";
+import OnboardingPrompt from "@/components/ui/OnboardingPrompt";
 import { serverFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
 
@@ -62,6 +64,29 @@ interface SubforumItem {
   last_activity_at: string | null;
 }
 
+interface ThreadItem {
+  id: string;
+  title: string;
+  is_pinned: boolean;
+  is_locked: boolean;
+  is_flagged?: boolean;
+  view_count?: number;
+  reply_count: number;
+  last_reply_at: string | null;
+  created_at: string;
+  subforum: { id: string; name: string; slug: string };
+  author: {
+    id: string;
+    username: string;
+    display_name: string;
+    avatar_url: string | null;
+    role: string;
+    membership_tier?: string;
+    is_verified?: boolean;
+    practitioner_verified?: boolean;
+  } | null;
+}
+
 interface StatsData {
   total_articles: number;
   total_members: number;
@@ -71,10 +96,11 @@ interface StatsData {
 
 export default async function HomePage() {
   // Fetch real data from backend (all in parallel)
-  const [articlesRes, popularRes, subforumsRes, statsRes] = await Promise.all([
+  const [articlesRes, popularRes, subforumsRes, latestThreadsRes, statsRes] = await Promise.all([
     serverFetch<ArticleListItem[]>("/articles?sort=newest&per_page=6", { next: { revalidate: 300 } }),
     serverFetch<ArticleListItem[]>("/articles?sort=popular&per_page=3", { next: { revalidate: 300 } }),
     serverFetch<SubforumItem[]>("/subforums", { next: { revalidate: 300 } }),
+    serverFetch<ThreadItem[]>("/threads/latest?per_page=5", { next: { revalidate: 120 } }),
     serverFetch<StatsData>("/stats", { next: { revalidate: 300 } }),
   ]);
 
@@ -82,6 +108,7 @@ export default async function HomePage() {
   const popularArticles = popularRes.success ? popularRes.data : [];
   const totalArticles = articlesRes.success ? (articlesRes.meta?.total ?? articlesRes.data.length) : 0;
   const subforums = subforumsRes.success ? subforumsRes.data : [];
+  const latestThreads = latestThreadsRes.success ? latestThreadsRes.data : [];
   const stats: StatsData = statsRes.success
     ? statsRes.data
     : {
@@ -132,6 +159,38 @@ export default async function HomePage() {
           <StatCard icon={<Users size={22} />} value={stats.total_members} label="Member" />
           <StatCard icon={<MessageCircle size={22} />} value={stats.active_subforums || subforums.length} label="Subforum Aktif" />
         </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <OnboardingPrompt />
+      </section>
+
+      {/* Latest community threads */}
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <h2 className="font-display text-3xl font-bold text-text-main">Diskusi Terbaru</h2>
+            <p className="mt-1 text-muted">Percakapan komunitas yang baru aktif</p>
+          </div>
+          <Link href="/forum" className="hidden items-center gap-1 text-sm font-medium text-primary hover:text-primary-dark sm:inline-flex">
+            Ke Forum <ArrowRight size={16} />
+          </Link>
+        </div>
+        {latestThreads.length > 0 ? (
+          <div className="space-y-3">
+            {latestThreads.map((t) => (
+              <ThreadRow key={t.id} thread={t} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border-main bg-white p-10 text-center">
+            <p className="font-display text-xl font-semibold">Belum ada diskusi aktif</p>
+            <p className="mt-2 text-sm text-muted">Mulai dari forum dan perkenalkan diri Anda ke komunitas.</p>
+            <Link href="/forum" className="mt-4 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark">
+              Buka Forum
+            </Link>
+          </div>
+        )}
       </section>
 
       {/* Latest Articles */}

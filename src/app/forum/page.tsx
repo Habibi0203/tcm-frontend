@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MessageCircle, Lock, ArrowRight, ShieldAlert } from "lucide-react";
+import { MessageCircle, Lock, ArrowRight, ShieldAlert, UserPlus } from "lucide-react";
 import { serverFetch } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -30,6 +30,23 @@ export default async function ForumPage() {
         <h1 className="font-display text-4xl font-bold text-text-main">Forum Komunitas</h1>
         <p className="mt-2 text-muted">Tempat bertukar pikiran, bertanya, dan berbagi pengalaman seputar TCM.</p>
       </header>
+
+      <section className="mb-6 rounded-2xl border border-primary/20 bg-primary-light/35 p-5 text-sm text-text-main">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-3">
+            <UserPlus size={22} className="mt-0.5 shrink-0 text-primary" />
+            <div>
+              <p className="font-semibold">Baru di komunitas?</p>
+              <p className="mt-1 text-muted">
+                Mulai dari subforum umum: perkenalkan diri, latar belajar TCM, dan topik yang ingin dipelajari.
+              </p>
+            </div>
+          </div>
+          <Link href="/forum/diskusi-umum/baru" className="inline-flex shrink-0 items-center justify-center rounded-full bg-primary px-5 py-2.5 font-semibold text-white hover:bg-primary-dark">
+            Perkenalkan diri
+          </Link>
+        </div>
+      </section>
 
       <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-light/30 p-5 text-sm text-text-main">
         <div className="flex gap-3">

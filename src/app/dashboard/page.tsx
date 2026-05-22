@@ -4,11 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback, Suspense } from "react";
-import { BookOpen, Bell, Settings, Check, ExternalLink, KeyRound, ShieldAlert, Loader2 } from "lucide-react";
+import { BookOpen, Bell, Settings, Check, ExternalLink, KeyRound, ShieldAlert, Loader2, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { apiFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
 import MemberBadge from "@/components/ui/MemberBadge";
+import { USER_INTERESTS } from "@/lib/interests";
 
 type Tab = "ringkasan" | "bookmark" | "notifikasi" | "moderasi" | "profil";
 
@@ -171,6 +172,8 @@ function DashboardInner() {
   // Profile form state
   const [displayName, setDisplayName] = useState(user?.display_name ?? "");
   const [bio, setBio]                 = useState(user?.bio ?? "");
+  const [profession, setProfession]   = useState(user?.profession ?? "general");
+  const [interests, setInterests]     = useState<string[]>(user?.interests ?? []);
   const [profSaved, setProfSaved]     = useState(false);
   const [profSaving, setProfSaving]   = useState(false);
   const [profError, setProfError]     = useState("");
@@ -181,6 +184,14 @@ function DashboardInner() {
   const [passSaving, setPassSaving]           = useState(false);
   const [passSaved, setPassSaved]             = useState(false);
   const [passError, setPassError]             = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    setDisplayName(user.display_name ?? "");
+    setBio(user.bio ?? "");
+    setProfession(user.profession ?? "general");
+    setInterests(user.interests ?? []);
+  }, [user]);
 
   if (!user) return null;
 
@@ -200,12 +211,23 @@ function DashboardInner() {
     const res = await apiFetch("/me", {
       method: "PATCH",
       token: access_token,
-      body: { display_name: displayName.trim(), bio: bio.trim() || null },
+      body: {
+        display_name: displayName.trim(),
+        bio: bio.trim() || null,
+        profession,
+        interests,
+      },
     });
 
     setProfSaving(false);
     if (res.success) {
-      updateUser({ display_name: displayName.trim(), bio: bio.trim() || null });
+      updateUser({
+        display_name: displayName.trim(),
+        bio: bio.trim() || null,
+        profession,
+        interests,
+        onboarding_completed: interests.length > 0 || Boolean(bio.trim()),
+      });
       setProfSaved(true);
       setTimeout(() => setProfSaved(false), 3000);
       return;
@@ -330,6 +352,24 @@ function DashboardInner() {
                 Selamat datang, {user.display_name.split(" ")[0]}!
               </h1>
               <p className="mb-8 text-muted">Ringkasan aktivitas Anda di tcm.my.id.</p>
+              {!user.onboarding_completed && (
+                <div className="mb-8 rounded-2xl border border-primary/20 bg-primary-light/35 p-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex gap-3">
+                      <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                        <Sparkles size={18} />
+                      </div>
+                      <div>
+                        <p className="font-display text-lg font-semibold text-text-main">Selesaikan onboarding komunitas</p>
+                        <p className="mt-1 text-sm text-muted">Tambahkan bio singkat dan topik minat supaya pengalaman komunitas lebih relevan.</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setTab("profil")} className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark">
+                      Lengkapi sekarang
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="grid gap-4 sm:grid-cols-3">
                 <StatBox label="Artikel Dibaca" value="-" />
                 <StatBox label="Diskusi" value="-" />
@@ -520,6 +560,43 @@ function DashboardInner() {
                     className="w-full resize-none rounded-xl border border-border-main bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                   <p className="mt-1 text-right text-xs text-muted">{bio.length}/300</p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-main">Peran belajar</label>
+                  <select
+                    value={profession}
+                    onChange={(e) => setProfession(e.target.value)}
+                    className="w-full rounded-xl border border-border-main bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  >
+                    <option value="general">Umum / peminat TCM</option>
+                    <option value="student">Mahasiswa / sedang belajar TCM</option>
+                    <option value="practitioner">Praktisi TCM</option>
+                  </select>
+                  <p className="mt-1 text-xs text-muted">Untuk badge praktisi terverifikasi tetap perlu verifikasi admin.</p>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-text-main">Minat TCM</label>
+                  <div className="flex flex-wrap gap-2">
+                    {USER_INTERESTS.map((item) => {
+                      const active = interests.includes(item.value);
+                      return (
+                        <button
+                          key={item.value}
+                          type="button"
+                          onClick={() => setInterests((current) => active ? current.filter((v) => v !== item.value) : [...current, item.value])}
+                          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            active
+                              ? "border-primary bg-primary text-white"
+                              : "border-border-main bg-white text-muted hover:bg-surface"
+                          }`}
+                          aria-pressed={active}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-xs text-muted">Pilih satu atau lebih topik yang ingin Anda ikuti.</p>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-text-main">Email</label>

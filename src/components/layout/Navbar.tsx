@@ -43,15 +43,28 @@ export default function Navbar() {
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef  = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
       const target = e.target as Node;
       if (notifRef.current && !notifRef.current.contains(target)) setNotifOpen(false);
       if (userRef.current  && !userRef.current.contains(target))  setUserMenuOpen(false);
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(target)) setMobileOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        setNotifOpen(false);
+        setUserMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   // Fetch notifications from real API
@@ -234,9 +247,11 @@ export default function Navbar() {
 
         {/* ── Mobile menu button ── */}
         <button
-          className="inline-flex items-center justify-center rounded-lg p-2 text-sand/70 hover:bg-bark-light hover:text-sand md:hidden"
+          className="inline-flex items-center justify-center rounded-lg p-2 text-sand/70 hover:bg-bark-light hover:text-sand focus:outline-none focus:ring-2 focus:ring-gold-light md:hidden"
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Menu"
+          aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-nav"
         >
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -244,14 +259,14 @@ export default function Navbar() {
 
       {/* ── Mobile Nav ── */}
       {mobileOpen && (
-        <div className="border-t border-bark-light bg-bark-light px-4 py-4 md:hidden">
+        <div id="mobile-nav" ref={mobileMenuRef} className="border-t border-bark-light bg-bark-light px-4 py-4 md:hidden">
           <nav className="space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="block rounded-lg px-3 py-2 text-sm font-medium text-sand/80 hover:bg-bark hover:text-gold-light"
+                className="block rounded-lg px-3 py-2 text-sm font-medium text-sand/80 hover:bg-bark hover:text-gold-light focus:outline-none focus:ring-2 focus:ring-gold-light"
               >
                 {link.label}
               </Link>
@@ -263,14 +278,14 @@ export default function Navbar() {
                 <Link
                   href="/masuk"
                   onClick={() => setMobileOpen(false)}
-                  className="rounded-lg border border-bark px-3 py-2 text-center text-sm font-medium text-sand"
+                  className="rounded-lg border border-bark px-3 py-2 text-center text-sm font-medium text-sand focus:outline-none focus:ring-2 focus:ring-gold-light"
                 >
                   Masuk
                 </Link>
                 <Link
                   href="/daftar"
                   onClick={() => setMobileOpen(false)}
-                  className="rounded-md bg-primary px-4 py-2 text-center text-sm font-medium text-white"
+                  className="rounded-md bg-primary px-4 py-2 text-center text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-gold-light"
                 >
                   Bergabung
                 </Link>
@@ -278,12 +293,12 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/dashboard" onClick={() => setMobileOpen(false)}
-                  className="rounded-lg bg-bark px-3 py-2 text-sm text-sand">
+                  className="rounded-lg bg-bark px-3 py-2 text-sm text-sand focus:outline-none focus:ring-2 focus:ring-gold-light">
                   Dashboard
                 </Link>
                 <button
                   onClick={() => { logout(); setMobileOpen(false); }}
-                  className="rounded-lg border border-red-900/40 px-3 py-2 text-left text-sm text-red-400"
+                  className="rounded-lg border border-red-900/40 px-3 py-2 text-left text-sm text-red-400 focus:outline-none focus:ring-2 focus:ring-gold-light"
                 >
                   Keluar
                 </button>

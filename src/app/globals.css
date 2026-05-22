@@ -79,3 +79,11 @@ body {
     margin-right: auto;
   }
 }
+
+
+@layer base {
+  :where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid rgb(var(--tw-primary));
+    outline-offset: 2px;
+  }
+}

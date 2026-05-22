@@ -18,6 +18,8 @@ export interface AuthUser {
   membership_tier: MembershipTier;
   is_verified:     boolean;
   is_active:       boolean;
+  interests?:      string[];
+  onboarding_completed?: boolean;
   created_at:      string;
 }
 
