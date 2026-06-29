@@ -4,14 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback, Suspense } from "react";
-import { BookOpen, Bell, Settings, Check, ExternalLink, KeyRound, ShieldAlert, Loader2, Sparkles } from "lucide-react";
+import { BookOpen, Bell, Settings, Check, ExternalLink, KeyRound, ShieldAlert, Loader2, Sparkles, ClipboardCheck, Eye, XCircle } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { apiFetch } from "@/lib/api";
 import ArticleCard from "@/components/ui/ArticleCard";
 import MemberBadge from "@/components/ui/MemberBadge";
 import { USER_INTERESTS } from "@/lib/interests";
 
-type Tab = "ringkasan" | "bookmark" | "notifikasi" | "moderasi" | "profil";
+type Tab = "ringkasan" | "bookmark" | "notifikasi" | "approval" | "content-qc" | "moderasi" | "profil";
 
 interface BookmarkedArticle {
   id: string;
@@ -65,12 +65,56 @@ interface ModerationReport {
   };
 }
 
+interface ContentQcAudit {
+  id: string;
+  article_id: string | null;
+  article_slug: string | null;
+  article_title: string;
+  author_username: string | null;
+  status: "pass" | "caution" | "reject" | "needs_review" | "takedown";
+  recommended_action: string | null;
+  risk_tier: number | null;
+  quality_score: number | null;
+  duplicate_score: number | null;
+  summary: string | null;
+  issues: string[] | null;
+  source_basis: { type?: string; title?: string; ref?: string; note?: string }[] | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+interface ApprovalArticle {
+  id: string;
+  title: string;
+  slug: string;
+  status: "draft" | "review" | "published" | "archived" | "scheduled";
+  access_tier: "free" | "premium";
+  author_id: string;
+  created_at: string;
+  published_at: string | null;
+  view_count: number;
+  like_count: number;
+}
+
 const BASE_TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "ringkasan",  label: "Ringkasan",  icon: <BookOpen size={16} /> },
   { key: "bookmark",   label: "Bookmark",   icon: <BookOpen size={16} /> },
   { key: "notifikasi", label: "Notifikasi", icon: <Bell size={16} /> },
   { key: "profil",     label: "Profil",     icon: <Settings size={16} /> },
 ];
+
+const APPROVAL_TAB: { key: Tab; label: string; icon: React.ReactNode } = {
+  key: "approval",
+  label: "Approval",
+  icon: <ClipboardCheck size={16} />,
+};
+
+
+const CONTENT_QC_TAB: { key: Tab; label: string; icon: React.ReactNode } = {
+  key: "content-qc",
+  label: "Content QC",
+  icon: <ShieldAlert size={16} />,
+};
 
 const MODERATION_TAB: { key: Tab; label: string; icon: React.ReactNode } = {
   key: "moderasi",
@@ -100,9 +144,11 @@ function DashboardInner() {
   const searchParams  = useSearchParams();
   const { user, isAuthenticated, access_token, _hasHydrated, updateUser } = useAuthStore();
 
-  const tabs = user && ["admin", "moderator"].includes(user.role)
-    ? [...BASE_TABS.slice(0, 3), MODERATION_TAB, BASE_TABS[3]]
-    : BASE_TABS;
+  const tabs = user?.role === "admin"
+    ? [...BASE_TABS.slice(0, 3), APPROVAL_TAB, CONTENT_QC_TAB, MODERATION_TAB, BASE_TABS[3]]
+    : user?.role === "moderator"
+      ? [...BASE_TABS.slice(0, 3), APPROVAL_TAB, MODERATION_TAB, BASE_TABS[3]]
+      : BASE_TABS;
   const rawTab = searchParams.get("tab") as Tab | null;
   const activeTab: Tab = tabs.some((t) => t.key === rawTab) ? rawTab! : "ringkasan";
 
@@ -110,6 +156,17 @@ function DashboardInner() {
   const [notifications, setNotifications] = useState<NotifItem[]>([]);
   const [reports, setReports]           = useState<ModerationReport[]>([]);
   const [reportsMeta, setReportsMeta]   = useState<{ page: number; per_page: number; total: number; total_pages: number } | null>(null);
+  const [approvalArticles, setApprovalArticles] = useState<ApprovalArticle[]>([]);
+  const [approvalMeta, setApprovalMeta] = useState<{ page: number; per_page: number; total: number; total_pages: number } | null>(null);
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const [approvalError, setApprovalError] = useState("");
+  const [approvalActionId, setApprovalActionId] = useState<string | null>(null);
+  const [qcAudits, setQcAudits] = useState<ContentQcAudit[]>([]);
+  const [qcMeta, setQcMeta] = useState<{ page: number; per_page: number; total: number; total_pages: number } | null>(null);
+  const [qcLoading, setQcLoading] = useState(false);
+  const [qcError, setQcError] = useState("");
+  const [qcStatusFilter, setQcStatusFilter] = useState("");
+
   const [reportStatusFilter, setReportStatusFilter] = useState("open");
   const [reportReasonFilter, setReportReasonFilter] = useState("");
   const [reportTypeFilter, setReportTypeFilter] = useState("");
@@ -144,6 +201,7 @@ function DashboardInner() {
     }
   }, [isAuthenticated, access_token, fetchDashboardData]);
 
+  const isAdmin = user?.role === "admin";
   const isModerator = Boolean(user && ["admin", "moderator"].includes(user.role));
 
   const fetchReports = useCallback(async () => {
@@ -164,6 +222,45 @@ function DashboardInner() {
     }
     setReportError(res.error.message || "Gagal memuat laporan moderasi.");
   }, [access_token, isModerator, reportAutoFilter, reportPage, reportReasonFilter, reportStatusFilter, reportTypeFilter]);
+
+  const fetchApprovalArticles = useCallback(async () => {
+    if (!access_token || !isModerator) return;
+    setApprovalLoading(true);
+    setApprovalError("");
+    const res = await apiFetch<ApprovalArticle[]>("/admin/articles?status=review&per_page=20", { token: access_token });
+    setApprovalLoading(false);
+    if (res.success) {
+      setApprovalArticles(res.data);
+      setApprovalMeta(res.meta ?? null);
+      return;
+    }
+    setApprovalError(res.error.message || "Gagal memuat artikel review.");
+  }, [access_token, isModerator]);
+
+  useEffect(() => {
+    if (activeTab === "approval") fetchApprovalArticles();
+  }, [activeTab, fetchApprovalArticles]);
+
+
+  const fetchQcAudits = useCallback(async () => {
+    if (!access_token || !isAdmin) return;
+    setQcLoading(true);
+    setQcError("");
+    const params = new URLSearchParams({ page: "1", per_page: "20" });
+    if (qcStatusFilter) params.set("status", qcStatusFilter);
+    const res = await apiFetch<ContentQcAudit[]>(`/admin/content-qc-audits?${params.toString()}`, { token: access_token });
+    setQcLoading(false);
+    if (res.success) {
+      setQcAudits(res.data);
+      setQcMeta(res.meta ?? null);
+      return;
+    }
+    setQcError(res.error.message || "Gagal memuat hasil Content QC.");
+  }, [access_token, isAdmin, qcStatusFilter]);
+
+  useEffect(() => {
+    if (activeTab === "content-qc") fetchQcAudits();
+  }, [activeTab, fetchQcAudits]);
 
   useEffect(() => {
     if (activeTab === "moderasi") fetchReports();
@@ -436,6 +533,105 @@ function DashboardInner() {
             </>
           )}
 
+          {/* ── Approval Artikel ── */}
+          {activeTab === "approval" && isModerator && (
+            <>
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h1 className="font-display text-2xl font-bold">Approval Artikel</h1>
+                  <p className="mt-1 text-sm text-muted">Satu tempat untuk meninjau draft AI-assisted sebelum publish. Tidak perlu masuk akun agent.</p>
+                </div>
+                <button
+                  onClick={fetchApprovalArticles}
+                  disabled={approvalLoading}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border-main px-4 py-2 text-sm font-medium text-text-main hover:bg-surface disabled:opacity-60"
+                >
+                  {approvalLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                  Refresh
+                </button>
+              </div>
+              <div className="mb-5 rounded-2xl border border-primary/20 bg-primary-light/30 p-4 text-sm text-text-main">
+                <p className="font-semibold">Aturan approval</p>
+                <p className="mt-1 text-muted">Approve hanya jika Guardian sudah pass/caution aman, disclaimer ada, dan tidak ada klaim diagnosis, resep personal, atau pengganti obat. Untuk Tier 3, tetap perlu keputusan Master.</p>
+              </div>
+              {approvalError && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{approvalError}</p>}
+              {approvalLoading && approvalArticles.length === 0 ? (
+                <p className="text-sm text-muted">Memuat artikel review…</p>
+              ) : approvalArticles.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border-main bg-surface p-10 text-center text-muted">
+                  Tidak ada artikel yang menunggu review.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {approvalArticles.map((article) => (
+                    <ApprovalArticleCard
+                      key={article.id}
+                      article={article}
+                      token={access_token ?? ""}
+                      busy={approvalActionId === article.id}
+                      onActionStart={() => setApprovalActionId(article.id)}
+                      onActionDone={() => { setApprovalActionId(null); fetchApprovalArticles(); }}
+                      onActionError={(msg) => { setApprovalActionId(null); setApprovalError(msg); }}
+                    />
+                  ))}
+                </div>
+              )}
+              {approvalMeta && approvalMeta.total > 0 && (
+                <p className="mt-4 text-xs text-muted">Total menunggu review: {approvalMeta.total}</p>
+              )}
+            </>
+          )}
+
+
+
+          {/* ── Content QC / Audit (Admin only) ── */}
+          {activeTab === "content-qc" && isAdmin && (
+            <>
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h1 className="font-display text-2xl font-bold">Content QC / Audit</h1>
+                  <p className="mt-1 text-sm text-muted">Area admin-only untuk hasil audit artikel otomatis. Laporan QC ditulis ke dashboard ini, bukan dikirim ke chat.</p>
+                </div>
+                <button
+                  onClick={fetchQcAudits}
+                  disabled={qcLoading}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border-main px-4 py-2 text-sm font-medium text-text-main hover:bg-surface disabled:opacity-60"
+                >
+                  {qcLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                  Refresh
+                </button>
+              </div>
+              <div className="mb-5 grid gap-3 rounded-2xl border border-border-main bg-card p-4 md:grid-cols-3">
+                <label className="text-xs font-medium text-text-main">
+                  Status QC
+                  <select value={qcStatusFilter} onChange={(e) => setQcStatusFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-border-main bg-white px-3 py-2 text-sm">
+                    <option value="">Semua</option>
+                    <option value="pass">Pass</option>
+                    <option value="caution">Caution</option>
+                    <option value="needs_review">Needs review</option>
+                    <option value="reject">Reject</option>
+                    <option value="takedown">Takedown</option>
+                  </select>
+                </label>
+                <div className="flex items-end text-xs text-muted">
+                  {qcMeta ? `${qcMeta.total} audit tercatat` : "Belum ada metadata"}
+                </div>
+              </div>
+              {qcError && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{qcError}</p>}
+              {qcLoading && qcAudits.length === 0 ? (
+                <p className="text-sm text-muted">Memuat hasil QC…</p>
+              ) : qcAudits.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border-main bg-surface p-10 text-center text-muted">
+                  Belum ada hasil Content QC.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {qcAudits.map((audit) => <ContentQcAuditCard key={audit.id} audit={audit} />)}
+                </div>
+              )}
+            </>
+          )}
+
           {/* ── Moderasi ── */}
           {activeTab === "moderasi" && isModerator && (
             <>
@@ -691,6 +887,136 @@ function DashboardInner() {
   );
 }
 
+
+
+function ContentQcAuditCard({ audit }: { audit: ContentQcAudit }) {
+  const statusClass = audit.status === "pass"
+    ? "bg-green-100 text-green-700"
+    : audit.status === "caution" || audit.status === "needs_review"
+      ? "bg-amber-light text-amber-tcm"
+      : "bg-red-100 text-red-700";
+
+  return (
+    <article className="rounded-2xl border border-border-main bg-card p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className={`rounded-full px-2 py-0.5 font-semibold ${statusClass}`}>{audit.status}</span>
+            {audit.recommended_action && <span className="rounded-full bg-surface px-2 py-0.5 font-semibold text-muted">Action: {audit.recommended_action}</span>}
+            {audit.risk_tier ? <span className="rounded-full bg-surface px-2 py-0.5 font-semibold text-muted">Tier {audit.risk_tier}</span> : null}
+            <span className="text-muted">{new Date(audit.created_at).toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+          </div>
+          <h2 className="mt-3 font-display text-lg font-bold text-text-main">{audit.article_title}</h2>
+          <p className="mt-1 text-xs text-muted">
+            {audit.author_username ? `@${audit.author_username}` : "author tidak tercatat"}
+            {audit.article_slug ? ` · /${audit.article_slug}` : ""}
+          </p>
+        </div>
+        {audit.article_slug && (
+          <Link href={`/artikel/${audit.article_slug}`} target="_blank" className="inline-flex items-center gap-1 rounded-lg border border-border-main px-3 py-1.5 text-xs font-medium text-primary hover:bg-surface">
+            Artikel <ExternalLink size={13} />
+          </Link>
+        )}
+      </div>
+      <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+        <div className="rounded-xl bg-surface p-3"><p className="text-xs text-muted">Quality</p><p className="font-semibold">{audit.quality_score ?? "-"}/100</p></div>
+        <div className="rounded-xl bg-surface p-3"><p className="text-xs text-muted">Duplikasi</p><p className="font-semibold">{audit.duplicate_score ?? "-"}/100</p></div>
+        <div className="rounded-xl bg-surface p-3"><p className="text-xs text-muted">Dibuat oleh</p><p className="font-semibold">{audit.created_by ?? "content-qc"}</p></div>
+      </div>
+      {audit.summary && <p className="mt-4 text-sm leading-relaxed text-text-main">{audit.summary}</p>}
+      {audit.issues && audit.issues.length > 0 && (
+        <div className="mt-4 rounded-xl border border-border-main bg-surface p-3">
+          <p className="mb-2 text-xs font-semibold text-text-main">Catatan QC</p>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
+            {audit.issues.slice(0, 8).map((issue, idx) => <li key={idx}>{issue}</li>)}
+          </ul>
+        </div>
+      )}
+      {audit.source_basis && audit.source_basis.length > 0 && (
+        <div className="mt-4 rounded-xl border border-border-main bg-white p-3">
+          <p className="mb-2 text-xs font-semibold text-text-main">Basis sumber</p>
+          <ul className="space-y-2 text-sm text-muted">
+            {audit.source_basis.slice(0, 5).map((src, idx) => (
+              <li key={idx}>
+                <span className="font-medium text-text-main">{src.title || src.ref || "Sumber"}</span>
+                {src.type ? <span> · {src.type}</span> : null}
+                {src.note ? <p className="text-xs">{src.note}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function ApprovalArticleCard({
+  article,
+  busy,
+  token,
+  onActionStart,
+  onActionDone,
+  onActionError,
+}: {
+  article: ApprovalArticle;
+  busy: boolean;
+  token: string;
+  onActionStart: () => void;
+  onActionDone: () => void;
+  onActionError: (message: string) => void;
+}) {
+  async function updateStatus(status: "published" | "draft" | "archived", reason: string) {
+    if (status === "published") {
+      const ok = window.confirm(`Publish artikel "${article.title}" ke publik sekarang?`);
+      if (!ok) return;
+    }
+    onActionStart();
+    const res = await apiFetch<{ message: string }>(`/admin/articles/${article.id}/status`, {
+      method: "PATCH",
+      token,
+      body: { status, reason },
+    });
+    if (res.success) {
+      onActionDone();
+      return;
+    }
+    onActionError(res.error.message || "Gagal memperbarui status artikel.");
+  }
+
+  return (
+    <article className="rounded-2xl border border-border-main bg-card p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full bg-amber-light px-2 py-0.5 font-semibold text-amber-tcm">Review</span>
+            <span className="rounded-full bg-surface px-2 py-0.5 font-semibold text-muted">{article.access_tier}</span>
+            <span className="text-muted">{new Date(article.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+          </div>
+          <h2 className="mt-3 font-display text-lg font-bold text-text-main">{article.title}</h2>
+          <p className="mt-1 break-all text-xs text-muted">/{article.slug}</p>
+        </div>
+        <Link href={`/artikel/${article.slug}`} target="_blank" className="inline-flex items-center gap-1 rounded-lg border border-border-main px-3 py-1.5 text-xs font-medium text-primary hover:bg-surface">
+          Preview <Eye size={13} />
+        </Link>
+      </div>
+      <div className="mt-5 flex flex-wrap gap-2 border-t border-border-main pt-4">
+        <button disabled={busy} onClick={() => updateStatus("published", "Disetujui dari dashboard approval.")} className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-dark disabled:opacity-60">
+          <Check size={13} /> Approve & Publish
+        </button>
+        <button disabled={busy} onClick={() => updateStatus("draft", "Dikembalikan ke draft untuk revisi.")} className="rounded-lg border border-border-main px-3 py-2 text-xs font-medium text-text-main hover:bg-surface disabled:opacity-60">
+          Kembalikan ke Draft
+        </button>
+        <button disabled={busy} onClick={() => {
+          const reason = window.prompt("Alasan arsip/tolak artikel:", "Perlu revisi safety / kualitas sebelum publish.");
+          if (!reason) return;
+          updateStatus("archived", reason);
+        }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60">
+          <XCircle size={13} /> Tolak / Arsip
+        </button>
+      </div>
+    </article>
+  );
+}
 
 function ModerationReportCard({
   report,

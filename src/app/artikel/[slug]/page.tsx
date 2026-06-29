@@ -221,6 +221,18 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
             <Image src={illustrationUrl} alt={article.title} width={800} height={450} className="h-full w-full object-cover" />
           </div>
 
+          {/* Editorial transparency */}
+          <div className="mb-6 rounded-2xl border border-sky-200 bg-sky-50/70 p-4">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-sky-200 bg-white px-2.5 py-1 text-xs font-semibold text-sky-700">
+                AI-assisted editorial
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed text-text-main">
+              Konten ini disusun dengan bantuan AI dan melalui pemeriksaan editorial otomatis untuk konsistensi bahasa, batas klaim, dan pengingat disclaimer medis.
+            </p>
+          </div>
+
           {/* Tags */}
           {(article.tags ?? []).length > 0 && (
             <div className="mb-6 flex flex-wrap gap-2">
@@ -247,10 +259,15 @@ export default async function ArtikelDetailPage({ params, searchParams }: PagePr
 
           {/* Disclaimer */}
           {article.has_disclaimer && (
-            <div className="mt-8 flex items-start gap-3 rounded-xl border border-amber-300/50 bg-amber-light/50 px-4 py-3 text-sm text-text-main">
-              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-tcm" />
-              <span>Artikel ini bersifat informatif dan bukan pengganti diagnosis atau terapi individual. Untuk keputusan kesehatan pribadi, konsultasikan dengan praktisi TCM yang kompeten atau tenaga kesehatan sesuai kebutuhan Anda.</span>
-            </div>
+            <details className="mt-8 rounded-xl border border-amber-300/50 bg-amber-light/40 px-4 py-3 text-sm text-text-main">
+              <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold text-amber-tcm marker:hidden">
+                <AlertTriangle size={16} className="shrink-0" />
+                Disclaimer
+              </summary>
+              <p className="mt-3 leading-relaxed text-text-main">
+                Artikel ini bersifat informatif dan bukan pengganti diagnosis atau terapi individual. Untuk keputusan kesehatan pribadi, konsultasikan dengan praktisi TCM yang kompeten atau tenaga kesehatan sesuai kebutuhan Anda.
+              </p>
+            </details>
           )}
 
           <ArticleComments articleId={article.id} initialComments={comments} />

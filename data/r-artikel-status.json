@@ -1,0 +1,124 @@
+{
+  "generated_at": "2026-06-29T10:00:00.988165+07:00",
+  "total": 678,
+  "counts": {
+    "published": 9,
+    "ready_for_publish": 1,
+    "planned": 667,
+    "held_out_of_sequence": 1
+  },
+  "items": [
+    {
+      "id": "019ee54f-62f5-7294-8a62-1da45779936a",
+      "sequence_no": 1,
+      "title": "Dasar Cara Pikir TCM",
+      "slug": "dasar-cara-pikir-tcm",
+      "status": "published",
+      "url": "https://tcm.my.id/artikel/cara-pikir-tcm-membaca-pola-sebelum-mengejar-nama-penyakit",
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019ee5ac-a930-7768-9254-c5ffecb871c9",
+      "sequence_no": 2,
+      "title": "Yin-Yang dan Wu Xing dalam Kesehatan",
+      "slug": "yin-yang-dan-wu-xing-dalam-kesehatan",
+      "status": "published",
+      "url": "https://tcm.my.id/artikel/yin-yang-dan-wu-xing-dalam-kesehatan",
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019ee7a5-4f09-72ab-8d25-f300b0925b00",
+      "sequence_no": 3,
+      "title": "Yin-Yang dalam TCM: Bahasa Keseimbangan Tubuh",
+      "slug": "yin-yang-dalam-tcm-bahasa-keseimbangan-tubuh",
+      "status": "published",
+      "url": "https://tcm.my.id/artikel/yin-yang-bahasa-keseimbangan-tubuh",
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019ee7a5-2b6e-779d-81a3-3e31273a6bf5",
+      "sequence_no": 4,
+      "title": "Yin dalam TCM: Tenang, Dingin, Lembap, dan Menyimpan",
+      "slug": "yin-dalam-tcm-tenang-dingin-lembap-dan-menyimpan",
+      "status": "published",
+      "url": "https://tcm.my.id/artikel/yin-dalam-tcm-tenang-dingin-lembap-dan-menyimpan",
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019ee7a5-4f09-72ab-8d25-f65fce64eb32",
+      "sequence_no": 5,
+      "title": "Yang dalam TCM: Hangat, Bergerak, Melindungi, dan Menggerakkan",
+      "slug": "yang-dalam-tcm-hangat-bergerak-melindungi-dan-menggerakkan",
+      "status": "published",
+      "url": "https://tcm.my.id/artikel/yang-dalam-tcm-hangat-bergerak-melindungi-dan-menggerakkan",
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019ee7a5-4f09-72ab-8d25-f979f94660d2",
+      "sequence_no": 6,
+      "title": "Wu Xing: Lima Elemen sebagai Peta Hubungan Organ",
+      "slug": "wu-xing-lima-elemen-sebagai-peta-hubungan-organ",
+      "status": "published",
+      "url": "https://tcm.my.id/artikel/wu-xing-sebagai-peta-hubungan-organ",
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019eea47-3d3a-72ce-8da4-63c9cc92345a",
+      "sequence_no": 7,
+      "title": "Kenapa Disebut Lima Elemen / Wu Xing?",
+      "slug": "kenapa-disebut-lima-elemen-wu-xing",
+      "status": "published",
+      "url": "https://tcm.my.id/artikel/kenapa-disebut-lima-elemen-dalam-tcm",
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019eea47-421b-76b8-98e7-72beb6b43416",
+      "sequence_no": 8,
+      "title": "Kayu: Hati, Gerak, Tendon, Mata, Rasa Asam",
+      "slug": "kayu-hati-gerak-tendon-mata-rasa-asam",
+      "status": "published",
+      "url": "https://tcm.my.id/artikel/kayu-dalam-tcm-membaca-hati-dari-gerak-tendon-mata-dan-rasa-asam",
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019eea47-4700-743d-b5aa-96870ba17866",
+      "sequence_no": 9,
+      "title": "Api: Jantung, Shen, Lidah, Rasa Pahit",
+      "slug": "api-jantung-shen-lidah-rasa-pahit",
+      "status": "ready_for_publish",
+      "url": null,
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019eea47-4d9f-720d-a82d-3d9d5580b164",
+      "sequence_no": 10,
+      "title": "Tanah: Limpa, Pencernaan, Otot, Rasa Manis",
+      "slug": "tanah-limpa-pencernaan-otot-rasa-manis",
+      "status": "published",
+      "url": "https://tcm.my.id/artikel/tanah-dalam-tcm-limpa-sebagai-poros-pencernaan-dan-otot",
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM"
+    },
+    {
+      "id": "019eea47-5fd4-7343-85c0-459b7776d64d",
+      "sequence_no": 13,
+      "title": "Siklus Menghidupi / Sheng dalam Lima Elemen",
+      "slug": "siklus-menghidupi-sheng-dalam-lima-elemen",
+      "status": "held_out_of_sequence",
+      "url": null,
+      "persona": "Bang Dzulfi",
+      "season": "Dasar Cara Pikir TCM",
+      "hold_reason": "out-of-sequence draft; release only when seq 1 and seq 3-12 are cleared and seq 13 becomes next eligible",
+      "file": "/root/tcm-blueprint/drafts/siklus-menghidupi-lima-elemen-tubuh-saling-menopang-bang-dzulfi-2026-06-24.md"
+    }
+  ]
+}
